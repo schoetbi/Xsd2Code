@@ -55,18 +55,15 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="UnitTest.cs" />
-    <Compile Include="xsd\dvd.cs">
-      <DependentUpon>dvd.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="xsd\dvd.Designer.cs">
-      <DependentUpon>dvd.cs</DependentUpon>
-    </Compile>
+    <Compile Include="xsd\ArrayOfArray.Designer.cs" />
+    <Compile Include="xsd\dvd.Designer.cs" />
     <Compile Include="xsd\Gender.cs">
       <DependentUpon>Gender.xsd</DependentUpon>
     </Compile>
     <Compile Include="xsd\Hierarchical.cs">
       <DependentUpon>Hierarchical.xsd</DependentUpon>
     </Compile>
+    <Compile Include="xsd\ReproSchema.Designer.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -74,6 +71,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="xsd\ArrayOfArray.xsd">
+      <Generator>xsd2CodeCustomTools</Generator>
+    </None>
     <None Include="xsd\ChoiceSequence.xsd">
       <LastGenOutput>ChoiceSequence1.Designer.cs</LastGenOutput>
     </None>
@@ -89,6 +89,7 @@
     </None>
     <None Include="xsd\Gender.xsd" />
     <None Include="xsd\Hierarchical.xsd" />
+    <None Include="xsd\ReproSchema.xsd" />
     <None Include="xsd\StackOverFlow.xsd" />
   </ItemGroup>
   <ItemGroup>

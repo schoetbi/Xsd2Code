@@ -6,6 +6,7 @@ using System.Xml.Schema;
 using System.Xml.Serialization;
 using Xsd2Code.Library.Extensions;
 using Xsd2Code.Library.Helpers;
+using System.Xml;
 
 namespace Xsd2Code.Library
 {
@@ -101,17 +102,15 @@ namespace Xsd2Code.Library
                 XmlSchema xsd;
                 var schemas = new XmlSchemas();
 
-                using (var fs = new FileStream(generatorParams.InputFilePath, FileMode.Open, FileAccess.Read))
+                xsd = XmlSchema.Read(XmlReader.Create(generatorParams.InputFilePath), new ValidationEventHandler(Validate));
+
+                XmlSchemaSet schemaSet = new XmlSchemaSet();
+                schemaSet.Add(xsd);
+                schemaSet.Compile();
+
+                foreach (XmlSchema schema in schemaSet.Schemas())
                 {
-                    xsd = XmlSchema.Read(fs, null);
-
-                    var schemaSet = new XmlSchemaSet();
-
-                    schemaSet.Add(xsd);
-                    schemaSet.Compile();
-
-                    foreach (XmlSchema schema in schemaSet.Schemas())
-                        schemas.Add(schema);
+                    schemas.Add(schema);
                 }
 
                 var exporter = new XmlCodeExporter(ns);
@@ -128,7 +127,7 @@ namespace Xsd2Code.Library
                 #region Execute extensions
 
                 var getExtensionResult = GeneratorFactory.GetCodeExtension(generatorParams);
-                if(!getExtensionResult.Success) return new Result<CodeNamespace>(ns, false, getExtensionResult.Messages);
+                if (!getExtensionResult.Success) return new Result<CodeNamespace>(ns, false, getExtensionResult.Messages);
 
                 var ext = getExtensionResult.Entity;
                 ext.Process(ns, xsd);
@@ -141,6 +140,12 @@ namespace Xsd2Code.Library
             {
                 return new Result<CodeNamespace>(ns, false, e.Message, MessageType.Error);
             }
+        }
+
+        private static void Validate(Object sender, ValidationEventArgs e)
+        {
+            if (e.Severity == XmlSeverityType.Error)
+                throw new Exception("Schema validation failed:\n" + e.Message);
         }
     }
 }

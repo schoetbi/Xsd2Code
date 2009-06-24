@@ -1,36 +1,30 @@
-﻿using System;
-using System.CodeDom.Compiler;
-using Microsoft.CSharp;
-using Microsoft.VisualBasic;
-using Microsoft.VisualC;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="CodeDomProviderFactory.cs" company="Xsd2Code">
+//   N/A
+// </copyright>
+// <summary>
+//   Code DOM Provider factory design pattern implementation
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace Xsd2Code.Library.Helpers
 {
+    using System;
+    using System.CodeDom.Compiler;
+    using Microsoft.CSharp;
+    using Microsoft.VisualBasic;
+    using Microsoft.VisualC;
+
     /// <summary>
     /// Code DOM Provider factory design pattern implementation
     /// </summary>
-    /// <remarks>
-    /// Revision history:
-    /// 
-    ///     Created 2009-02-18 by Ruslan Urban
-    /// 
-    /// </remarks>
     public static class CodeDomProviderFactory
     {
         /// <summary>
         /// Get Code DOM provider
         /// </summary>
-        /// <param name="generatorParams"></param>
-        /// <returns></returns>
-        public static CodeDomProvider GetProvider(GeneratorParams generatorParams)
-        {
-            return GetProvider(generatorParams.Language);
-        }
-
-        /// <summary>
-        /// Get Code DOM provider
-        /// </summary>
-        /// <returns></returns>
+        /// <param name="language">The language.</param>
+        /// <returns>CodeDom provider according language.</returns>
         public static CodeDomProvider GetProvider(GenerationLanguage language)
         {
             switch (language)
@@ -46,8 +40,7 @@ namespace Xsd2Code.Library.Helpers
 
                 default:
                     throw new NotImplementedException(
-                        string.Format(Properties.Resources.UnsupportedLanguageCodeDomProvider,
-                        Utility.GetEnumDescription(language)));
+                        string.Format(Properties.Resources.UnsupportedLanguageCodeDomProvider, Utility.GetEnumDescription(language)));
             }
         }
     }

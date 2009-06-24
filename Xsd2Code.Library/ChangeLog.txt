@@ -1,0 +1,12 @@
+﻿Release 2.8.6
+
+Release 2.8.6.0
+---------------
+2009-05-27, PC : Apply patch Patch fixing error "SimpleType has already been declared", Cyclic Schema Reference
+				 http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=7285
+2009-06-11, PC : Fix incorrect generation on two-dimentional arrays.
+			     http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=7269
+2009-06-19, PC : Add new Serialize, Deserilaze, SaveToFile, LoadFromFile method signature.
+				 Fix warnning when setter test if field is null on enum type.
+				 Refactoring, styleCop.
+		

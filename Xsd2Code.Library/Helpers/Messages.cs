@@ -15,9 +15,7 @@ namespace Xsd2Code.Library.Helpers
     /// </summary>
     /// <remarks>
     /// Revision history:
-    /// 
     ///     Created 2009-02-20 by Ruslan Urban
-    /// 
     /// </remarks>
     public class MessageCollection : Collection<Message>
     {

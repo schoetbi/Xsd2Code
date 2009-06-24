@@ -104,7 +104,7 @@ namespace Xsd2Code.Library
 
         public GeneratorFacade(GeneratorParams generatorParams)
         {
-            var provider = CodeDomProviderFactory.GetProvider(generatorParams);
+            var provider = CodeDomProviderFactory.GetProvider(generatorParams.Language);
             this.Init(provider, generatorParams);
         }
 
@@ -278,7 +278,7 @@ namespace Xsd2Code.Library
 
             if (!inputFile.Exists)
             {
-                var errorMessage = "Faild to generate code\n";
+                var errorMessage = string.Format("XSD File not found at location {0}\n", GeneratorContext.GeneratorParams.InputFilePath);
                 errorMessage += "Exception :\n";
                 errorMessage += string.Format("Input file {0} not exist", GeneratorContext.GeneratorParams.InputFilePath);
                 return new Result(false, MessageType.Error, errorMessage);
@@ -292,7 +292,6 @@ namespace Xsd2Code.Library
             {
                 try
                 {
-//                    var codeOption = new CodeGeneratorOptions();
                     var result = Generator.Process(GeneratorContext.GeneratorParams);
                     if (!result.Success) return result;
 
