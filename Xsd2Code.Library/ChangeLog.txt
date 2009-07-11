@@ -9,4 +9,5 @@ Release 2.8.6.0
 2009-06-19, PC : Add new Serialize, Deserilaze, SaveToFile, LoadFromFile method signature.
 				 Fix warnning when setter test if field is null on enum type.
 				 Refactoring, styleCop.
+2009-07-11, PC : Detect project langage and default project namespace.
 		
