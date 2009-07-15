@@ -69,7 +69,7 @@ namespace Xsd2Code.Library.Helpers
                 case "silverlight":
                 case "silverlight2":
                 case "silverlight20":
-                    return TargetFramework.Silverlight20;
+                    return TargetFramework.Silverlight;
                 case "2":
                 case "20":
                 case "2.0":

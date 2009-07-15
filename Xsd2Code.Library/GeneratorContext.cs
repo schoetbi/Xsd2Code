@@ -18,9 +18,19 @@
         public const string CODEBASETAG = "CodeBaseTag";
 
         /// <summary>
+        /// Indicate if use base class for all methods
+        /// </summary>
+        public const string USEGENERICBASECLASSTAG = "UseBaseClass";       
+
+        /// <summary>
         /// Language tag
         /// </summary>
         public const string CODETYPETAG = "codeType";
+
+        /// <summary>
+        /// Language tag
+        /// </summary>
+        public const string BASECLASSNAMETAG = "BaseClassName";
 
         /// <summary>
         /// Base generic type for collections when CollectionType is DefinedType

@@ -107,7 +107,7 @@
     </Compile>
     <Compile Include="Extensions\CodeExtension.cs" />
     <Compile Include="Extensions\CodeExtensionAttribute.cs" />
-    <Compile Include="Extensions\Silverlight20Extension.cs" />
+    <Compile Include="Extensions\SilverlightExtension.cs" />
     <Compile Include="Extensions\Net35Extension.cs" />
     <Compile Include="Extensions\Net30Extension.cs" />
     <Compile Include="GeneratorFactory.cs" />

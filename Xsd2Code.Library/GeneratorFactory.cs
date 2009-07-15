@@ -75,8 +75,8 @@ namespace Xsd2Code.Library
                     return new Net30Extension();
                 case TargetFramework.Net35:
                     return new Net35Extension();
-                case TargetFramework.Silverlight20:
-                    return new Silverlight20Extension();
+                case TargetFramework.Silverlight:
+                    return new SilverlightExtension();
             }
             return null;
         }

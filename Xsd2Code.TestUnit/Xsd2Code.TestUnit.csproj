@@ -56,6 +56,7 @@
     </Compile>
     <Compile Include="UnitTest.cs" />
     <Compile Include="xsd\ArrayOfArray.Designer.cs" />
+    <Compile Include="xsd\CircularClassReference.Designer.cs" />
     <Compile Include="xsd\dvd.Designer.cs" />
     <Compile Include="xsd\Gender.cs">
       <DependentUpon>Gender.xsd</DependentUpon>
@@ -77,6 +78,7 @@
     <None Include="xsd\ChoiceSequence.xsd">
       <LastGenOutput>ChoiceSequence1.Designer.cs</LastGenOutput>
     </None>
+    <None Include="xsd\CircularClassReference.xsd" />
     <None Include="xsd\dvd.xsd">
       <SubType>
       </SubType>

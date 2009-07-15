@@ -23,7 +23,7 @@ namespace Xsd2Code.Library
         [Description(".Net Framework 3.5")]
         Net35,
 
-        [Description("Silverlight 2.0")]
-        Silverlight20
+        [Description("Silverlight")]
+        Silverlight
     }
 }

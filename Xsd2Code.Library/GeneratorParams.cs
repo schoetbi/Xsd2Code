@@ -37,7 +37,6 @@ namespace Xsd2Code.Library
         /// Indicate if use automatic properties
         /// </summary>
         private bool automaticPropertiesField = false;
-
         #endregion
 
         /// <summary>
@@ -59,6 +58,8 @@ namespace Xsd2Code.Library
             this.SaveToFileMethodName = "SaveToFile";
             this.DeserializeMethodName = "Deserialize";
             this.SerializeMethodName = "Serialize";
+            this.BaseClassName = "EntityBase";
+            this.UseGenericBaseClass = true;
         }
 
         /// <summary>
@@ -262,6 +263,18 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Gets or sets a value indicating the name of Serialize method.
         /// </summary>
+        [Category("Serialize"), DefaultValue(true), Description("Use generic patial base class for all methods")]
+        public bool UseGenericBaseClass { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of Serialize method.
+        /// </summary>
+        [Category("Serialize"), DefaultValue("EntityBase"), Description("Name of generic patial base class")]
+        public string BaseClassName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of Serialize method.
+        /// </summary>
         [Category("Serialize"), DefaultValue("Serialize"), Description("The name of Serialize method.")]
         public string SerializeMethodName { get; set; }
 
@@ -304,10 +317,8 @@ namespace Xsd2Code.Library
         {
             var parameters = new GeneratorParams();
 
-            // TODO:Change this to default project code langage.
 
             #region Search generationFile
-
             outputFile = string.Empty;
 
             foreach (GenerationLanguage language in Enum.GetValues(typeof(GenerationLanguage)))
@@ -330,7 +341,6 @@ namespace Xsd2Code.Library
 
             using (TextReader streamReader = new StreamReader(outputFile))
             {
-                // TODO:Change this to search method
                 streamReader.ReadLine();
                 streamReader.ReadLine();
                 streamReader.ReadLine();
@@ -365,6 +375,8 @@ namespace Xsd2Code.Library
 
                     parameters.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
 
+                    parameters.UseGenericBaseClass = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
+
                     string str = optionLine.ExtractStrFromXML(GeneratorContext.SERIALIZEMETHODNAMETAG);
                     parameters.SerializeMethodName = str.Length > 0 ? str : "Serialize";
 
@@ -377,6 +389,9 @@ namespace Xsd2Code.Library
                     str = optionLine.ExtractStrFromXML(GeneratorContext.LOADFROMFILEMETHODNAMETAG);
                     parameters.LoadFromFileMethodName = str.Length > 0 ? str : "LoadFromFile";
 
+                    str = optionLine.ExtractStrFromXML(GeneratorContext.BASECLASSNAMETAG);
+                    parameters.BaseClassName = str.Length > 0 ? str : "EntityBase";
+                    
                     // TODO:get custom using
                     string customUsingString = optionLine.ExtractStrFromXML(GeneratorContext.CUSTOMUSINGSTAG);
                     if (!string.IsNullOrEmpty(customUsingString))
@@ -440,6 +455,10 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(
                                                           GeneratorContext.INCLUDESERIALIZEMETHODTAG,
                                                           this.IncludeSerializeMethod.ToString()));
+
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(
+                                                          GeneratorContext.USEGENERICBASECLASSTAG,
+                                                          this.UseGenericBaseClass.ToString()));
 
             optionsLine.Append(XmlHelper.InsertXMLFromStr(
                                                           GeneratorContext.GENERATECLONEMETHODTAG,

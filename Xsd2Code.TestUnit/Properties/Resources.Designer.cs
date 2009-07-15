@@ -116,6 +116,21 @@ namespace Xsd2Code.TestUnit.Properties {
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
         ///&lt;!--Created with Liquid XML Studio - FREE Community Edition (http://www.liquid-technologies.com)--&gt;
+        ///&lt;xs:schema xmlns:mstns=&quot;http://tempuri.org/CircularClassReference.xsd&quot; elementFormDefault=&quot;qualified&quot; targetNamespace=&quot;http://tempuri.org/CircularClassReference.xsd&quot; id=&quot;CircularClassReference&quot; xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+        ///  &lt;xs:complexType name=&quot;Circular&quot;&gt;
+        ///    &lt;xs:sequence&gt;
+        ///      &lt;xs:element name=&quot;circular&quot; type=&quot;mstns:Circular&quot; /&gt;
+        ///      &lt;xs:eleme [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string CircularClassReference {
+            get {
+                return ResourceManager.GetString("CircularClassReference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+        ///&lt;!--Created with Liquid XML Studio - FREE Community Edition (http://www.liquid-technologies.com)--&gt;
         ///&lt;xs:schema attributeFormDefault=&quot;unqualified&quot; elementFormDefault=&quot;qualified&quot; id=&quot;Dvd&quot; xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
         ///  &lt;xs:include schemaLocation=&quot;Actor.xsd&quot; /&gt;
         ///  &lt;xs:element name=&quot;DvdCollection&quot;&gt;

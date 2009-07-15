@@ -306,11 +306,11 @@ namespace Xsd2Code.Library
                     errorMessage += "Exception :\n";
                     errorMessage += e.Message;
 
-                    Debug.WriteLine("");
+                    Debug.WriteLine(string.Empty);
                     Debug.WriteLine("XSD2Code - ----------------------------------------------------------");
                     Debug.WriteLine("XSD2Code - " + e.Message);
                     Debug.WriteLine("XSD2Code - ----------------------------------------------------------");
-                    Debug.WriteLine("");
+                    Debug.WriteLine(string.Empty);
                     return new Result(false, MessageType.Error, errorMessage);
                 }
 

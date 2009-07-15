@@ -74,6 +74,36 @@ namespace Xsd2Code.TestUnit
             Assert.IsTrue(result.Success, result.Messages.ToString());
         }
 
+        /// <summary>
+        /// Circulars this instance.
+        /// </summary>
+        [TestMethod]
+        public void CircularClassReference()
+        {
+            // Copy resource file to the run-time directory
+            string inputFilePath = GetInputFilePath("CircularClassReference.xsd", Resources.CircularClassReference);
+            var parameters = new GeneratorParams();
+            parameters.InputFilePath = inputFilePath;
+            parameters.TargetFramework = TargetFramework.Net35;
+            parameters.AutomaticProperties = true;
+            parameters.IncludeSerializeMethod = false;
+
+            var xsdGen = new GeneratorFacade(parameters);
+            var result = xsdGen.Generate();
+
+            try
+            {
+                Circular cs = new Circular();
+                int count = cs.circular.count;
+            }
+            catch (Exception e)
+            {
+
+                Assert.Fail(e.Message);
+            }
+            
+        }
+
         [TestMethod]
         public void ArrayOfArray()
         {
@@ -142,8 +172,11 @@ namespace Xsd2Code.TestUnit
 
             // Copy resource file to the run-time directory
             string inputFilePath = GetInputFilePath("Dvd.xsd", Resources.dvd);
-
-            var xsdGen = new GeneratorFacade(GetGeneratorParams(inputFilePath));
+            var paremters = GetGeneratorParams(inputFilePath);
+            paremters.CollectionObjectType = CollectionType.ObservableCollection;
+            paremters.TargetFramework = TargetFramework.Net35;
+            paremters.EnableDataBinding = false;
+            var xsdGen = new GeneratorFacade(paremters);
             var result = xsdGen.Generate();
 
             DvdCollection dvd = new DvdCollection();
@@ -233,14 +266,14 @@ namespace Xsd2Code.TestUnit
         //}
 
         [TestMethod]
-        public void Silverlight20_1()
+        public void Silverlight()
         {
             // Get the code namespace for the schema.
             GetInputFilePath("Actor.xsd", Resources.Actor);
             string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
             var generatorParams = GetGeneratorParams(inputFilePath);
-            generatorParams.TargetFramework = TargetFramework.Silverlight20;
+            generatorParams.TargetFramework = TargetFramework.Silverlight;
             generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".Silverlight20_01.cs");
 
             var xsdGen = new GeneratorFacade(generatorParams);

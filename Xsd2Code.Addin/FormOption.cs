@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using Xsd2Code.Library;
+using System.Diagnostics;
 
 namespace Xsd2Code.Addin
 {
@@ -114,6 +115,12 @@ namespace Xsd2Code.Addin
             int ascii = Convert.ToInt16(e.KeyChar);
             if (ascii == 27) this.Close();
         }
+
+        private void linkToCodePlex_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new ProcessStartInfo(linkToCodePlex.Text));
+        }
+
 
 
    }

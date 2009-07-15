@@ -10,4 +10,7 @@ Release 2.8.6.0
 				 Fix warnning when setter test if field is null on enum type.
 				 Refactoring, styleCop.
 2009-07-11, PC : Detect project langage and default project namespace.
+2009-17-15, PC : Use IsolateStrorageFile to save and load xml with silverlight.
+2009-17-15, PC : Add the initialization of the collections in the property according the lazy pattern.
+2009-17-15, PC : Fix bug stackoverflow in ctor in case of circular class reference.
 		

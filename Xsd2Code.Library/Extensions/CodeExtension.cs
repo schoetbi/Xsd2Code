@@ -47,6 +47,11 @@ namespace Xsd2Code.Library.Extensions
         /// </summary>
         private static List<string> enumListField;
 
+        /// <summary>
+        /// Contains all collection fields.
+        /// </summary>
+        private static List<string> lasyLoadingFields = new List<string>();
+
         #region public method
         /// <summary>
         /// Process method for cs or vb CodeDom generation
@@ -57,10 +62,16 @@ namespace Xsd2Code.Library.Extensions
         {
             this.ImportNamespaces(code);
             CollectionTypes.Clear();
+            lasyLoadingFields.Clear();
 
             var types = new CodeTypeDeclaration[code.Types.Count];
             code.Types.CopyTo(types, 0);
-            code.Types.Insert(0, this.GenerateBaseClass());
+
+            // Generate generic base class
+            if (GeneratorContext.GeneratorParams.UseGenericBaseClass)
+            {
+                code.Types.Insert(0, this.GenerateBaseClass());
+            }
 
             enumListField = (from p in types
                              where p.IsEnum
@@ -95,6 +106,8 @@ namespace Xsd2Code.Library.Extensions
         /// <returns>return CodeDom clone method</returns>
         protected static CodeTypeMember GetCloneMethod(CodeTypeDeclaration type)
         {
+            string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
+
             // ----------------------------------------------------------------------
             // /// <summary>
             // /// Create clone of this TClass object
@@ -108,18 +121,18 @@ namespace Xsd2Code.Library.Extensions
                                   {
                                       Attributes = MemberAttributes.Public,
                                       Name = "Clone",
-                                      ReturnType = new CodeTypeReference("T")
+                                      ReturnType = new CodeTypeReference(typeName)
                                   };
 
             CodeDomHelper.CreateSummaryComment(
                 cloneMethod.Comments,
-                string.Format("Create a clone of this {0} object", type.Name));
+                string.Format("Create a clone of this {0} object", typeName));
 
             var memberwiseCloneMethod = new CodeMethodInvokeExpression(
                 new CodeThisReferenceExpression(),
                 "MemberwiseClone");
 
-            var statement = new CodeMethodReturnStatement(new CodeCastExpression("T", memberwiseCloneMethod));
+            var statement = new CodeMethodReturnStatement(new CodeCastExpression(typeName, memberwiseCloneMethod));
             cloneMethod.Statements.Add(statement);
             return cloneMethod;
         }
@@ -127,10 +140,10 @@ namespace Xsd2Code.Library.Extensions
         /// <summary>
         /// Processes the class.
         /// </summary>
-        /// <param name="code">CodeNameSpace instance.</param>
+        /// <param name="codeNamespace">The code namespace.</param>
         /// <param name="schema">The input xsd schema.</param>
         /// <param name="type">Represents a type declaration for a class, structure, interface, or enumeration</param>
-        protected virtual void ProcessClass(CodeNamespace code, XmlSchema schema, CodeTypeDeclaration type)
+        protected virtual void ProcessClass(CodeNamespace codeNamespace, XmlSchema schema, CodeTypeDeclaration type)
         {
             var addedToConstructor = false;
             var newCTor = false;
@@ -138,9 +151,12 @@ namespace Xsd2Code.Library.Extensions
             var ctor = this.GetConstructor(type, ref newCTor);
 
             // Inherits from EntityBase
-            var ctr = new CodeTypeReference("EntityBase");
-            ctr.TypeArguments.Add(new CodeTypeReference(type.Name));
-            type.BaseTypes.Add(ctr);
+            if (GeneratorContext.GeneratorParams.UseGenericBaseClass)
+            {
+                var ctr = new CodeTypeReference(GeneratorContext.GeneratorParams.BaseClassName);
+                ctr.TypeArguments.Add(new CodeTypeReference(type.Name));
+                type.BaseTypes.Add(ctr);
+            }
 
             // Generate WCF DataContract
             this.CreateDataContractAttribute(type, schema);
@@ -162,16 +178,32 @@ namespace Xsd2Code.Library.Extensions
 
                 var codeMember = member as CodeMemberField;
                 if (codeMember != null)
-                    this.ProcessFields(codeMember, ctor, code, ref addedToConstructor);
+                    this.ProcessFields(codeMember, ctor, codeNamespace, ref addedToConstructor);
 
                 var codeMemberProperty = member as CodeMemberProperty;
                 if (codeMemberProperty != null)
-                    this.ProcessProperty(type, codeMemberProperty, currentElement, schema);
+                    this.ProcessProperty(type, codeNamespace, codeMemberProperty, currentElement, schema);
             }
 
             // Add new ctor if required
             if (addedToConstructor && newCTor)
                 type.Members.Add(ctor);
+
+            // If don't use base class, generate all methods inside class
+            if (!GeneratorContext.GeneratorParams.UseGenericBaseClass)
+            {
+                if (GeneratorContext.GeneratorParams.EnableDataBinding)
+                    this.CreateDataBinding(type);
+
+                if (GeneratorContext.GeneratorParams.IncludeSerializeMethod)
+                {
+                    CreateStaticSerializer(type);
+                    this.CreateSerializeMethods(type);
+                }
+
+                if (GeneratorContext.GeneratorParams.GenerateCloneMethod)
+                    this.CreateCloneMethod(type);
+            }
         }
 
         /// <summary>
@@ -295,7 +327,10 @@ namespace Xsd2Code.Library.Extensions
         /// <param name="codeTypeDeclaration">Represents a type declaration for a class, structure, interface, or enumeration.</param>
         protected virtual void CreateCloneMethod(CodeTypeDeclaration codeTypeDeclaration)
         {
-            codeTypeDeclaration.Members.Add(GetCloneMethod(codeTypeDeclaration));
+            var cloneMethod = GetCloneMethod(codeTypeDeclaration);
+            cloneMethod.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, "Clone method"));
+            cloneMethod.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, "Clone method"));
+            codeTypeDeclaration.Members.Add(cloneMethod);
         }
 
         /// <summary>
@@ -304,10 +339,24 @@ namespace Xsd2Code.Library.Extensions
         /// <param name="type">Represents a type declaration for a class, structure, interface, or enumeration.</param>
         protected virtual void CreateSerializeMethods(CodeTypeDeclaration type)
         {
-            type.Members.Add(this.CreateSerializeMethod(type));
-            type.Members.AddRange(this.CreateDeserializeMethod(type));
-            type.Members.AddRange(this.CreateSaveToFileMethod(type));
-            type.Members.AddRange(this.CreateLoadFromFileMethod(type));
+            // Serialize
+            var ser = this.CreateSerializeMethod(type);
+            ser.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, "Serialize/Deserialize"));
+            type.Members.Add(ser);
+
+            // Deserialize
+            type.Members.AddRange(this.GetOverrideDeserializeMethods(type));
+            type.Members.Add(this.GetDeserializeMethod(type));
+
+            // SaveToFile
+            type.Members.AddRange(this.GetOverrideSaveToFileMethods(type));
+            type.Members.Add(this.GetSaveToFileMethod());
+
+            // LoadFromFile
+            type.Members.AddRange(this.GetOverrideLoadFromFileMethods(type));
+            var lff = this.GetLoadFromFileMethod(type);
+            lff.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, "Serialize/Deserialize"));
+            type.Members.Add(lff);
         }
 
         /// <summary>
@@ -403,9 +452,80 @@ namespace Xsd2Code.Library.Extensions
         /// </summary>
         /// <param name="type">represent a type declaration of class</param>
         /// <returns>Deserialize CodeMemberMethod</returns>
-        protected virtual CodeMemberMethod[] CreateDeserializeMethod(CodeTypeDeclaration type)
+        protected virtual CodeMemberMethod GetDeserializeMethod(CodeTypeDeclaration type)
+        {
+            string deserializeTypeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
+
+            // ---------------------------------------
+            // public static T Deserialize(string xml)
+            // ---------------------------------------
+            var deserializeMethod = new CodeMemberMethod
+            {
+                Attributes = MemberAttributes.Public | MemberAttributes.Static,
+                Name = GeneratorContext.GeneratorParams.DeserializeMethodName
+            };
+
+            deserializeMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "xml"));
+            deserializeMethod.ReturnType = new CodeTypeReference(deserializeTypeName);
+
+            deserializeMethod.Statements.Add(
+                new CodeVariableDeclarationStatement(
+                    new CodeTypeReference(typeof(StringReader)),
+                    "stringReader",
+                    new CodePrimitiveExpression(null)));
+
+            var tryStatmanentsCol = new CodeStatementCollection();
+            var finallyStatmanentsCol = new CodeStatementCollection();
+
+            // ------------------------------------------------------
+            // stringReader = new StringReader(xml);
+            // ------------------------------------------------------
+            var deserializeStatmanents = new CodeStatementCollection();
+
+            tryStatmanentsCol.Add(new CodeAssignStatement(
+                          new CodeSnippetExpression("stringReader"),
+                          new CodeObjectCreateExpression(
+                              new CodeTypeReference(typeof(StringReader)),
+                              new CodeExpression[] { new CodeSnippetExpression("xml") })));
+
+            // ----------------------------------------------------------
+            // obj = (ClassName)serializer.Deserialize(xmlReader);
+            // return true;
+            // ----------------------------------------------------------
+            var deserialize = CodeDomHelper.GetInvokeMethod(
+                                                            "Serializer",
+                                                            "Deserialize",
+                                                            new CodeExpression[]
+                                                            {
+                                                                CodeDomHelper.GetInvokeMethod(
+                                                                "System.Xml.XmlReader", 
+                                                                "Create", 
+                                                                new CodeExpression[] { new CodeSnippetExpression("stringReader") })
+                                                            });
+
+            var castExpr = new CodeCastExpression(deserializeTypeName, deserialize);
+            var returnStmt = new CodeMethodReturnStatement(castExpr);
+
+            tryStatmanentsCol.Add(returnStmt);
+            tryStatmanentsCol.AddRange(deserializeStatmanents);
+
+            finallyStatmanentsCol.Add(CodeDomHelper.GetDispose("stringReader"));
+
+            var tryfinallyStmt = new CodeTryCatchFinallyStatement(tryStatmanentsCol.ToArray(), new CodeCatchClause[0], finallyStatmanentsCol.ToArray());
+            deserializeMethod.Statements.Add(tryfinallyStmt);
+
+            return deserializeMethod;
+        }
+
+        /// <summary>
+        /// Get Deserialize method
+        /// </summary>
+        /// <param name="type">represent a type declaration of class</param>
+        /// <returns>Deserialize CodeMemberMethod</returns>
+        protected virtual CodeMemberMethod[] GetOverrideDeserializeMethods(CodeTypeDeclaration type)
         {
             var deserializeMethodList = new List<CodeMemberMethod>();
+            string deserializeTypeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
 
             // -------------------------------------------------------------------------------------
             // public static bool Deserialize(string xml, out T obj, out System.Exception exception)
@@ -418,7 +538,7 @@ namespace Xsd2Code.Library.Extensions
 
             deserializeMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "xml"));
 
-            var param = new CodeParameterDeclarationExpression("T", "obj") { Direction = FieldDirection.Out };
+            var param = new CodeParameterDeclarationExpression(deserializeTypeName, "obj") { Direction = FieldDirection.Out };
             deserializeMethod.Parameters.Add(param);
 
             param = new CodeParameterDeclarationExpression(typeof(Exception), "exception") { Direction = FieldDirection.Out };
@@ -445,7 +565,7 @@ namespace Xsd2Code.Library.Extensions
                         deserializeMethod.Statements.Add(
                             new CodeAssignStatement(
                               new CodeSnippetExpression("obj"),
-                                new CodeSnippetExpression("default(T)")));
+                                new CodeSnippetExpression(string.Format("default({0})", deserializeTypeName))));
                     }
 
                     break;
@@ -509,7 +629,7 @@ namespace Xsd2Code.Library.Extensions
             deserializeMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "xml"));
             deserializeMethod.ReturnType = new CodeTypeReference(typeof(bool));
 
-            param = new CodeParameterDeclarationExpression("T", "obj") { Direction = FieldDirection.Out };
+            param = new CodeParameterDeclarationExpression(deserializeTypeName, "obj") { Direction = FieldDirection.Out };
             deserializeMethod.Parameters.Add(param);
 
             // ---------------------------
@@ -536,93 +656,99 @@ namespace Xsd2Code.Library.Extensions
             var returnStmt = new CodeMethodReturnStatement(deserializeInvoke);
             deserializeMethod.Statements.Add(returnStmt);
             deserializeMethodList.Add(deserializeMethod);
-
-            // ---------------------------------------
-            // public static T Deserialize(string xml)
-            // ---------------------------------------
-            deserializeMethod = new CodeMemberMethod
-            {
-                Attributes = MemberAttributes.Public | MemberAttributes.Static,
-                Name = GeneratorContext.GeneratorParams.DeserializeMethodName
-            };
-
-            deserializeMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "xml"));
-            deserializeMethod.ReturnType = new CodeTypeReference("T");
-
-            deserializeMethod.Statements.Add(
-                new CodeVariableDeclarationStatement(
-                    new CodeTypeReference(typeof(StringReader)),
-                    "stringReader",
-                    new CodePrimitiveExpression(null)));
-
-            deserializeMethod.Statements.Add(
-                new CodeVariableDeclarationStatement(
-                    new CodeTypeReference(typeof(XmlReader)),
-                    "xmlReader",
-                    new CodePrimitiveExpression(null)));
-
-            tryStatmanentsCol = new CodeStatementCollection();
-            var finallyStatmanentsCol = new CodeStatementCollection();
-
-            // ------------------------------------------------------
-            // stringReader = new StringReader(xml);
-            // ------------------------------------------------------
-            var deserializeStatmanents = new CodeStatementCollection();
-
-            tryStatmanentsCol.Add(new CodeAssignStatement(
-                          new CodeSnippetExpression("stringReader"),
-                          new CodeObjectCreateExpression(
-                              new CodeTypeReference(typeof(StringReader)),
-                              new CodeExpression[] { new CodeSnippetExpression("xml") })));
-
-            //string serializerParameter;
-            //switch (GeneratorContext.GeneratorParams.TargetFramework)
-            //{
-            //    case TargetFramework.Silverlight20:
-            //        serializerParameter = "stringReader";
-            //        break;
-            //    default:
-            //        serializerParameter = "xmlReader";
-            //        break;
-            //}
-
-            // ----------------------------------------------------------
-            // obj = (ClassName)serializer.Deserialize(xmlReader);
-            // return true;
-            // ----------------------------------------------------------
-            var deserialize = CodeDomHelper.GetInvokeMethod(
-                                                            "Serializer",
-                                                            "Deserialize",
-                                                            new CodeExpression[]
-                                                            {
-                                                                CodeDomHelper.GetInvokeMethod(
-                                                                "System.Xml.XmlReader", 
-                                                                "Create", 
-                                                                new CodeExpression[] { new CodeSnippetExpression("stringReader") })
-                                                            });
-
-            var castExpr = new CodeCastExpression("T", deserialize);
-            returnStmt = new CodeMethodReturnStatement(castExpr);
-
-            tryStatmanentsCol.Add(returnStmt);
-            tryStatmanentsCol.AddRange(deserializeStatmanents);
-
-            finallyStatmanentsCol.Add(CodeDomHelper.GetDispose("stringReader"));
-
-            var tryfinallyStmt = new CodeTryCatchFinallyStatement(tryStatmanentsCol.ToArray(), new CodeCatchClause[0], finallyStatmanentsCol.ToArray());
-            deserializeMethod.Statements.Add(tryfinallyStmt);
-
-            deserializeMethodList.Add(deserializeMethod);
-
             return deserializeMethodList.ToArray();
         }
 
         /// <summary>
         /// Gets the save to file code DOM method.
         /// </summary>
+        /// <returns>
+        /// return the save to file code DOM method statment
+        /// </returns>
+        protected virtual CodeMemberMethod GetSaveToFileMethod()
+        {
+            // -----------------------------------------------
+            // public virtual void SaveToFile(string fileName)
+            // -----------------------------------------------
+            var saveToFileMethod = new CodeMemberMethod
+            {
+                Attributes = MemberAttributes.Public,
+                Name = GeneratorContext.GeneratorParams.SaveToFileMethodName
+            };
+
+            saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+
+            saveToFileMethod.Statements.Add(
+                new CodeVariableDeclarationStatement(
+                    new CodeTypeReference(typeof(StreamWriter)),
+                    "streamWriter",
+                    new CodePrimitiveExpression(null)));
+
+            // ------------------------
+            // try {...} finally {...}
+            // -----------------------
+            var tryExpression = new CodeStatementCollection();
+
+            // ------------------------------
+            // string xmlString = Serialize();
+            // -------------------------------
+            var serializeMethodInvoke = new CodeMethodInvokeExpression(
+                new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.SerializeMethodName));
+
+            var xmlString = new CodeVariableDeclarationStatement(
+                new CodeTypeReference(typeof(string)), "xmlString", serializeMethodInvoke);
+
+            tryExpression.Add(xmlString);
+
+            // --------------------------------------------------------------
+            // System.IO.FileInfo xmlFile = new System.IO.FileInfo(fileName);
+            // --------------------------------------------------------------
+            tryExpression.Add(CodeDomHelper.CreateObject(typeof(FileInfo), "xmlFile", new[] { "fileName" }));
+
+            // ----------------------------------------
+            // StreamWriter Tex = xmlFile.CreateText();
+            // ----------------------------------------
+            var createTextMethodInvoke = CodeDomHelper.GetInvokeMethod("xmlFile", "CreateText");
+
+            tryExpression.Add(
+                new CodeAssignStatement(
+                    new CodeSnippetExpression("streamWriter"),
+                    createTextMethodInvoke));
+
+            // ----------------------------------
+            // streamWriter.WriteLine(xmlString);
+            // ----------------------------------
+            var writeLineMethodInvoke =
+                CodeDomHelper.GetInvokeMethod(
+                                                "streamWriter",
+                                                "WriteLine",
+                                                new CodeExpression[]
+                                                  {
+                                                      new CodeSnippetExpression("xmlString")
+                                                  });
+
+            tryExpression.Add(writeLineMethodInvoke);
+            var closeMethodInvoke = CodeDomHelper.GetInvokeMethod("streamWriter", "Close");
+
+            tryExpression.Add(closeMethodInvoke);
+
+            var finallyStatmanentsCol = new CodeStatementCollection();
+            finallyStatmanentsCol.Add(CodeDomHelper.GetDispose("streamWriter"));
+
+            var trycatch = new CodeTryCatchFinallyStatement(tryExpression.ToArray(), new CodeCatchClause[0], finallyStatmanentsCol.ToArray());
+            saveToFileMethod.Statements.Add(trycatch);
+
+            return saveToFileMethod;
+        }
+
+        /// <summary>
+        /// Gets the save to file code DOM method.
+        /// </summary>
         /// <param name="type">CodeTypeDeclaration type.</param>
-        /// <returns>return the save to file code DOM method statment </returns>
-        protected virtual CodeMemberMethod[] CreateSaveToFileMethod(CodeTypeDeclaration type)
+        /// <returns>
+        /// return the save to file code DOM method statment
+        /// </returns>
+        protected virtual CodeMemberMethod[] GetOverrideSaveToFileMethods(CodeTypeDeclaration type)
         {
             var saveToFileMethodList = new List<CodeMemberMethod>();
             var saveToFileMethod = new CodeMemberMethod
@@ -686,79 +812,6 @@ namespace Xsd2Code.Library.Extensions
             saveToFileMethod.Comments.Add(CodeDomHelper.GetReturnComment("true if can serialize and save into file; otherwise, false"));
 
             saveToFileMethodList.Add(saveToFileMethod);
-
-            // -----------------------------------------------
-            // public virtual void SaveToFile(string fileName)
-            // -----------------------------------------------
-            saveToFileMethod = new CodeMemberMethod
-            {
-                Attributes = MemberAttributes.Public,
-                Name = GeneratorContext.GeneratorParams.SaveToFileMethodName
-            };
-
-            saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
-
-            saveToFileMethod.Statements.Add(
-                new CodeVariableDeclarationStatement(
-                    new CodeTypeReference(typeof(StreamWriter)),
-                    "streamWriter",
-                    new CodePrimitiveExpression(null)));
-
-            // ------------------------
-            // try {...} finally {...}
-            // -----------------------
-            tryExpression = new CodeStatementCollection();
-
-            // ------------------------------
-            // string xmlString = Serialize();
-            // -------------------------------
-            var serializeMethodInvoke = new CodeMethodInvokeExpression(
-                new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.SerializeMethodName));
-
-            var xmlString = new CodeVariableDeclarationStatement(
-                new CodeTypeReference(typeof(string)), "xmlString", serializeMethodInvoke);
-
-            tryExpression.Add(xmlString);
-
-            // --------------------------------------------------------------
-            // System.IO.FileInfo xmlFile = new System.IO.FileInfo(fileName);
-            // --------------------------------------------------------------
-            tryExpression.Add(CodeDomHelper.CreateObject(typeof(FileInfo), "xmlFile", new[] { "fileName" }));
-
-            // ----------------------------------------
-            // StreamWriter Tex = xmlFile.CreateText();
-            // ----------------------------------------
-            var createTextMethodInvoke = CodeDomHelper.GetInvokeMethod("xmlFile", "CreateText");
-
-            tryExpression.Add(
-                new CodeAssignStatement(
-                    new CodeSnippetExpression("streamWriter"),
-                    createTextMethodInvoke));
-            
-            // ----------------------------------
-            // streamWriter.WriteLine(xmlString);
-            // ----------------------------------
-            var writeLineMethodInvoke =
-                CodeDomHelper.GetInvokeMethod(
-                                                "streamWriter",
-                                                "WriteLine",
-                                                new CodeExpression[]
-                                                  {
-                                                      new CodeSnippetExpression("xmlString")
-                                                  });
-
-            tryExpression.Add(writeLineMethodInvoke);
-            var closeMethodInvoke = CodeDomHelper.GetInvokeMethod("streamWriter", "Close");
-
-            tryExpression.Add(closeMethodInvoke);
-
-            var finallyStatmanentsCol = new CodeStatementCollection();
-            finallyStatmanentsCol.Add(CodeDomHelper.GetDispose("streamWriter"));
-
-            trycatch = new CodeTryCatchFinallyStatement(tryExpression.ToArray(), new CodeCatchClause[0], finallyStatmanentsCol.ToArray());
-            saveToFileMethod.Statements.Add(trycatch);
-
-            saveToFileMethodList.Add(saveToFileMethod);
             return saveToFileMethodList.ToArray();
         }
 
@@ -767,8 +820,108 @@ namespace Xsd2Code.Library.Extensions
         /// </summary>
         /// <param name="type">The type CodeTypeDeclaration.</param>
         /// <returns>return the codeDom LoadFromFile method</returns>
-        protected virtual CodeMemberMethod[] CreateLoadFromFileMethod(CodeTypeDeclaration type)
+        protected virtual CodeMemberMethod GetLoadFromFileMethod(CodeTypeDeclaration type)
         {
+            string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
+
+            // ---------------------------------------------
+            // public static T LoadFromFile(string fileName)
+            // ---------------------------------------------
+            var loadFromFileMethod = new CodeMemberMethod
+            {
+                Attributes = MemberAttributes.Public | MemberAttributes.Static,
+                Name = GeneratorContext.GeneratorParams.LoadFromFileMethodName
+            };
+
+            loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+            loadFromFileMethod.ReturnType = new CodeTypeReference(typeName);
+
+            loadFromFileMethod.Statements.Add(
+                new CodeVariableDeclarationStatement(
+                        new CodeTypeReference(typeof(FileStream)),
+                        "file",
+                        new CodePrimitiveExpression(null)));
+
+            loadFromFileMethod.Statements.Add(
+                new CodeVariableDeclarationStatement(
+                        new CodeTypeReference(typeof(StreamReader)),
+                        "sr",
+                        new CodePrimitiveExpression(null)));
+
+            var tryStatmanentsCol = new CodeStatementCollection();
+            var finallyStatmanentsCol = new CodeStatementCollection();
+
+            // ---------------------------------------------------------------------------
+            // file = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+            // sr = new StreamReader(file);
+            // ---------------------------------------------------------------------------
+            tryStatmanentsCol.Add(
+                new CodeAssignStatement(
+                    new CodeSnippetExpression("file"),
+                    new CodeObjectCreateExpression(
+                        typeof(FileStream),
+                        new CodeExpression[]
+                        {
+                            new CodeSnippetExpression("fileName"),
+                            new CodeSnippetExpression("FileMode.Open"),
+                            new CodeSnippetExpression("FileAccess.Read")
+                        })));
+
+            tryStatmanentsCol.Add(
+                new CodeAssignStatement(
+                    new CodeSnippetExpression("sr"),
+                    new CodeObjectCreateExpression(
+                        typeof(StreamReader),
+                        new CodeExpression[]
+                        {
+                            new CodeSnippetExpression("file"),
+                        })));
+
+            // ----------------------------------
+            // string xmlString = sr.ReadToEnd();
+            // ----------------------------------
+            var readToEndInvoke = CodeDomHelper.GetInvokeMethod("sr", "ReadToEnd");
+
+            var xmlString = new CodeVariableDeclarationStatement(
+                new CodeTypeReference(typeof(string)), "xmlString", readToEndInvoke);
+
+            tryStatmanentsCol.Add(xmlString);
+            tryStatmanentsCol.Add(CodeDomHelper.GetInvokeMethod("sr", "Close"));
+            tryStatmanentsCol.Add(CodeDomHelper.GetInvokeMethod("file", "Close"));
+
+            // ------------------------------------------------------
+            // return Deserialize(xmlString, out obj, out exception);
+            // ------------------------------------------------------            
+            var fileName = new CodeSnippetExpression("xmlString");
+
+            var deserializeInvoke =
+                new CodeMethodInvokeExpression(
+                    new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.DeserializeMethodName),
+                    new CodeExpression[] { fileName });
+
+            var rstmts = new CodeMethodReturnStatement(deserializeInvoke);
+            tryStatmanentsCol.Add(rstmts);
+
+            finallyStatmanentsCol.Add(CodeDomHelper.GetDispose("file"));
+            finallyStatmanentsCol.Add(CodeDomHelper.GetDispose("sr"));
+
+            var tryfinally = new CodeTryCatchFinallyStatement(
+                CodeDomHelper.CodeStmtColToArray(tryStatmanentsCol), new CodeCatchClause[0], CodeDomHelper.CodeStmtColToArray(finallyStatmanentsCol));
+
+            loadFromFileMethod.Statements.Add(tryfinally);
+
+            return loadFromFileMethod;
+        }
+
+        /// <summary>
+        /// Gets the load from file CodeDOM method.
+        /// </summary>
+        /// <param name="type">The type CodeTypeDeclaration.</param>
+        /// <returns>return the codeDom LoadFromFile method</returns>
+        protected virtual CodeMemberMethod[] GetOverrideLoadFromFileMethods(CodeTypeDeclaration type)
+        {
+            string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
+
             var saveToFileMethodList = new List<CodeMemberMethod>();
             var loadFromFileMethod = new CodeMemberMethod
                                          {
@@ -778,7 +931,7 @@ namespace Xsd2Code.Library.Extensions
 
             loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
 
-            var param = new CodeParameterDeclarationExpression("T", "obj") { Direction = FieldDirection.Out };
+            var param = new CodeParameterDeclarationExpression(typeName, "obj") { Direction = FieldDirection.Out };
             loadFromFileMethod.Parameters.Add(param);
 
             param = new CodeParameterDeclarationExpression(typeof(Exception), "exception") { Direction = FieldDirection.Out };
@@ -794,7 +947,7 @@ namespace Xsd2Code.Library.Extensions
                 new CodeAssignStatement(new CodeSnippetExpression("exception"), new CodePrimitiveExpression(null)));
 
             loadFromFileMethod.Statements.Add(
-                new CodeAssignStatement(new CodeSnippetExpression("obj"), new CodeSnippetExpression("default(T)")));
+                new CodeAssignStatement(new CodeSnippetExpression("obj"), new CodeSnippetExpression(string.Format("default({0})", typeName))));
 
             var tryStatmanentsCol = new CodeStatementCollection();
 
@@ -840,7 +993,7 @@ namespace Xsd2Code.Library.Extensions
             loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
             loadFromFileMethod.ReturnType = new CodeTypeReference(typeof(bool));
 
-            param = new CodeParameterDeclarationExpression("T", "obj") { Direction = FieldDirection.Out };
+            param = new CodeParameterDeclarationExpression(typeName, "obj") { Direction = FieldDirection.Out };
             loadFromFileMethod.Parameters.Add(param);
 
             // ---------------------------
@@ -867,66 +1020,6 @@ namespace Xsd2Code.Library.Extensions
             var returnStmt = new CodeMethodReturnStatement(loadFromFileMethodInvok);
             loadFromFileMethod.Statements.Add(returnStmt);
             saveToFileMethodList.Add(loadFromFileMethod);
-
-            // ---------------------------------------------
-            // public static T LoadFromFile(string fileName)
-            // ---------------------------------------------
-            loadFromFileMethod = new CodeMemberMethod
-            {
-                Attributes = MemberAttributes.Public | MemberAttributes.Static,
-                Name = GeneratorContext.GeneratorParams.LoadFromFileMethodName
-            };
-
-            loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
-            loadFromFileMethod.ReturnType = new CodeTypeReference("T");
-
-            var loadFromFileStatmanentsCol = new CodeStatementCollection();
-            var fileOjb = CodeDomHelper.CreateObject(
-                        typeof(FileStream),
-                        "file",
-                        new[]
-                        {
-                            "fileName", "FileMode.Open",
-                            "FileAccess.Read"
-                        });
-            loadFromFileStatmanentsCol.Add(fileOjb);
-
-            var sr = CodeDomHelper.CreateObject(typeof(StreamReader), "sr", new[] { "file" });
-            loadFromFileStatmanentsCol.Add(sr);
-
-            // ---------------------------------------------------------------------------
-            // FileStream file = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-            // StreamReader sr = new StreamReader(file);
-            // ---------------------------------------------------------------------------
-
-            // ----------------------------------
-            // string xmlString = sr.ReadToEnd();
-            // ----------------------------------
-            var readToEndInvoke = CodeDomHelper.GetInvokeMethod("sr", "ReadToEnd");
-
-            var xmlString = new CodeVariableDeclarationStatement(
-                new CodeTypeReference(typeof(string)), "xmlString", readToEndInvoke);
-
-            loadFromFileStatmanentsCol.Add(xmlString);
-            loadFromFileStatmanentsCol.Add(CodeDomHelper.GetInvokeMethod("sr", "Close"));
-            loadFromFileStatmanentsCol.Add(CodeDomHelper.GetInvokeMethod("file", "Close"));
-
-            // ------------------------------------------------------
-            // return Deserialize(xmlString, out obj, out exception);
-            // ------------------------------------------------------            
-            fileName = new CodeSnippetExpression("xmlString");
-
-            var deserializeInvoke =
-                new CodeMethodInvokeExpression(
-                    new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.DeserializeMethodName),
-                    new CodeExpression[] { fileName });
-
-            var rstmts = new CodeMethodReturnStatement(deserializeInvoke);
-            loadFromFileStatmanentsCol.Add(rstmts);
-            loadFromFileMethod.Statements.AddRange(loadFromFileStatmanentsCol);
-
-            saveToFileMethodList.Add(loadFromFileMethod);
-
             return saveToFileMethodList.ToArray();
         }
 
@@ -984,45 +1077,6 @@ namespace Xsd2Code.Library.Extensions
         protected virtual void CreateDataMemberAttribute(CodeMemberProperty prop)
         {
             // abstract
-        }
-
-        /// <summary>
-        /// Search XmlElement in schema.
-        /// </summary>
-        /// <param name="codeTypeDeclaration">Represents a type declaration for a class, structure, interface, or enumeration.</param>
-        /// <param name="schema">schema object</param>
-        /// <param name="visitedSchemas">The visited schemas.</param>
-        /// <returns>
-        /// return found XmlSchemaElement or null value
-        /// </returns>
-        protected virtual XmlSchemaElement SearchElementInSchema(CodeTypeDeclaration codeTypeDeclaration, XmlSchema schema, List<XmlSchema> visitedSchemas)
-        {
-            foreach (var item in schema.Items)
-            {
-                var xmlElement = item as XmlSchemaElement;
-                if (xmlElement == null) continue;
-
-                var xmlSubElement = this.SearchElement(codeTypeDeclaration, xmlElement, string.Empty, string.Empty);
-                if (xmlSubElement != null) return xmlSubElement;
-            }
-
-            // If not found search in schema inclusion
-            foreach (var item in schema.Includes)
-            {
-                var schemaInc = item as XmlSchemaInclude;
-
-                // avoid to follow cyclic refrence
-                if ((schemaInc == null) || visitedSchemas.Exists(loc => schemaInc.Schema == loc))
-                    continue;
-
-                visitedSchemas.Add(schemaInc.Schema);
-                var includeElmts = this.SearchElementInSchema(codeTypeDeclaration, schemaInc.Schema, visitedSchemas);
-                visitedSchemas.Remove(schemaInc.Schema);
-
-                if (includeElmts != null) return includeElmts;
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -1157,13 +1211,13 @@ namespace Xsd2Code.Library.Extensions
             if (GeneratorContext.GeneratorParams.CollectionObjectType != CollectionType.Array)
             {
                 CodeTypeDeclaration declaration = this.FindTypeInNamespace(field.Type.BaseType, ns);
-                if ((thisIsCollectionType && field.Type.ArrayElementType == null)
-                     ||
+                if (thisIsCollectionType ||
                      (((declaration != null) && declaration.IsClass)
                       && ((declaration.TypeAttributes & TypeAttributes.Abstract) != TypeAttributes.Abstract)))
                 {
-                    ctor.Statements.Insert(0, this.CreateInstanceCodeStatments(field.Name, field.Type));
-                    addedToConstructor = true;
+                    lasyLoadingFields.Add(field.Name);
+                    //ctor.Statements.Insert(0, this.CreateInstanceCodeStatments(field.Name, field.Type));
+                    //addedToConstructor = true;
                 }
             }
         }
@@ -1221,10 +1275,11 @@ namespace Xsd2Code.Library.Extensions
         /// Property process
         /// </summary>
         /// <param name="type">Represents a type declaration for a class, structure, interface, or enumeration</param>
+        /// <param name="ns">The ns.</param>
         /// <param name="member">Type members include fields, methods, properties, constructors and nested types</param>
         /// <param name="xmlElement">Represent the root element in schema</param>
         /// <param name="schema">XML Schema</param>
-        protected virtual void ProcessProperty(CodeTypeDeclaration type, CodeTypeMember member, XmlSchemaElement xmlElement, XmlSchema schema)
+        protected virtual void ProcessProperty(CodeTypeDeclaration type, CodeNamespace ns, CodeTypeMember member, XmlSchemaElement xmlElement, XmlSchema schema)
         {
             if (GeneratorContext.GeneratorParams.EnableSummaryComment)
             {
@@ -1281,6 +1336,20 @@ namespace Xsd2Code.Library.Extensions
                 this.CreateDataMemberAttribute(prop);
             }
 
+            // Lasy loading
+            var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
+            if (propReturnStatment != null)
+            {
+                var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
+                if (field != null)
+                {
+                    if (lasyLoadingFields.IndexOf(field.FieldName) != -1)
+                    {
+                        prop.GetStatements.Insert(0, this.CreateInstanceCodeStatments(field.FieldName, prop.Type));
+                    }
+                }
+            }
+
             // Add OnPropertyChanged in setter
             if (GeneratorContext.GeneratorParams.EnableDataBinding)
             {
@@ -1326,7 +1395,9 @@ namespace Xsd2Code.Library.Extensions
                             var condStatmentCondNotNull =
                                 new CodeConditionStatement(
                                     new CodeBinaryOperatorExpression(
-                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), cfreL.FieldName), CodeBinaryOperatorType.IdentityInequality, new CodePrimitiveExpression(null)),
+                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+                                                                         cfreL.FieldName),
+                                        CodeBinaryOperatorType.IdentityInequality, new CodePrimitiveExpression(null)),
                                     new CodeStatement[] { condStatmentCondEquals },
                                     CodeDomHelper.CodeStmtColToArray(setValueCondition));
 
@@ -1348,8 +1419,25 @@ namespace Xsd2Code.Library.Extensions
                         else
                             prop.SetStatements.Add(propChange);
                     }
+
                 }
             }
+        }
+
+        /// <summary>
+        /// Determines whether [is complex type] [the specified code type reference].
+        /// </summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="codeTypeReference">The code type reference.</param>
+        /// <param name="ns">The ns.</param>
+        /// <returns>
+        /// true if type is complex type (class, List, etc.)"/&gt;
+        /// </returns>
+        protected bool IsComplexType(CodeTypeReference codeTypeReference, CodeNamespace ns)
+        {
+            CodeTypeDeclaration declaration = this.FindTypeInNamespace(codeTypeReference.BaseType, ns);
+            return ((declaration != null) && declaration.IsClass) &&
+                   ((declaration.TypeAttributes & TypeAttributes.Abstract) != TypeAttributes.Abstract);
         }
 
         /// <summary>
@@ -1410,7 +1498,7 @@ namespace Xsd2Code.Library.Extensions
         /// Get CodeTypeReference for collection
         /// </summary>
         /// <param name="codeType">The code Type.</param>
-        /// <returns></returns>
+        /// <returns>return array of or genereric collection</returns>
         protected virtual CodeTypeReference GetCollectionType(CodeTypeReference codeType)
         {
             CodeTypeReference collectionType = codeType;
@@ -1446,8 +1534,10 @@ namespace Xsd2Code.Library.Extensions
                         if (codeType.ArrayElementType.ArrayRank > 0)
                             collectionType.ArrayElementType.ArrayRank = 0;
                     }
+
                     break;
             }
+
             return collectionType;
         }
 
@@ -1481,57 +1571,22 @@ namespace Xsd2Code.Library.Extensions
 
         #region Private methods
         /// <summary>
-        /// Generates the base class.
-        /// </summary>
-        /// <returns>Return base class codetype declaration</returns>
-        private CodeTypeDeclaration GenerateBaseClass()
-        {
-            var baseClass = new CodeTypeDeclaration("EntityBase")
-                                {
-                                    IsClass = true,
-                                    IsPartial = true,
-                                    TypeAttributes = TypeAttributes.Public
-                                };
-
-            baseClass.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, "Base entity"));
-            baseClass.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, "Base entity"));
-                
-            if (GeneratorContext.GeneratorParams.EnableDataBinding)
-                baseClass.BaseTypes.Add(typeof(INotifyPropertyChanged));
-
-            baseClass.TypeParameters.Add(new CodeTypeParameter("T"));
-
-            if (GeneratorContext.GeneratorParams.EnableDataBinding)
-                this.CreateDataBinding(baseClass);
-
-            if (GeneratorContext.GeneratorParams.IncludeSerializeMethod)
-            {
-                this.CreateStaticSerializer(baseClass);
-                this.CreateSerializeMethods(baseClass);
-            }
-
-            if (GeneratorContext.GeneratorParams.GenerateCloneMethod)
-                this.CreateCloneMethod(baseClass);
-
-            return baseClass;
-        }
-
-        /// <summary>
         /// Creates the static serializer.
         /// </summary>
-        /// <param name="baseClass">The base class.</param>
-        private void CreateStaticSerializer(CodeTypeDeclaration baseClass)
+        /// <param name="classType">Type of the class.</param>
+        private static void CreateStaticSerializer(CodeTypeDeclaration classType)
         {
+            string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : classType.Name;
+
             // -----------------------------------------------------------------
             // private static System.Xml.Serialization.XmlSerializer serializer;
             // -----------------------------------------------------------------
             var serializerfield = new CodeMemberField(typeof(XmlSerializer), "serializer");
             serializerfield.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, "Private fields"));
-            serializerfield.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, "Private fields"));
             serializerfield.Attributes = MemberAttributes.Static | MemberAttributes.Private;
-            baseClass.Members.Add(serializerfield);
+            classType.Members.Add(serializerfield);
 
-            var typeRef = new CodeTypeReference("T");
+            var typeRef = new CodeTypeReference(typeName);
             var typeofValue = new CodeTypeOfExpression(typeRef);
 
             // private static System.Xml.Serialization.XmlSerializer Serializer { get {...} }
@@ -1558,7 +1613,83 @@ namespace Xsd2Code.Library.Extensions
             serializerProperty.GetStatements.Add(
                 new CodeMethodReturnStatement(new CodeSnippetExpression("serializer")));
 
-            baseClass.Members.Add(serializerProperty);
+            serializerProperty.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, "Private fields"));
+            classType.Members.Add(serializerProperty);
+        }
+
+        /// <summary>
+        /// Generates the base class.
+        /// </summary>
+        /// <returns>Return base class codetype declaration</returns>
+        private CodeTypeDeclaration GenerateBaseClass()
+        {
+            var baseClass = new CodeTypeDeclaration(GeneratorContext.GeneratorParams.BaseClassName)
+                                {
+                                    IsClass = true,
+                                    IsPartial = true,
+                                    TypeAttributes = TypeAttributes.Public
+                                };
+
+            baseClass.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, "Base entity class"));
+            baseClass.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, "Base entity class"));
+
+            if (GeneratorContext.GeneratorParams.EnableDataBinding)
+                baseClass.BaseTypes.Add(typeof(INotifyPropertyChanged));
+
+            baseClass.TypeParameters.Add(new CodeTypeParameter("T"));
+
+            if (GeneratorContext.GeneratorParams.EnableDataBinding)
+                this.CreateDataBinding(baseClass);
+
+            if (GeneratorContext.GeneratorParams.IncludeSerializeMethod)
+            {
+                CreateStaticSerializer(baseClass);
+                this.CreateSerializeMethods(baseClass);
+            }
+
+            if (GeneratorContext.GeneratorParams.GenerateCloneMethod)
+                this.CreateCloneMethod(baseClass);
+
+            return baseClass;
+        }
+
+        /// <summary>
+        /// Search XmlElement in schema.
+        /// </summary>
+        /// <param name="codeTypeDeclaration">Represents a type declaration for a class, structure, interface, or enumeration.</param>
+        /// <param name="schema">schema object</param>
+        /// <param name="visitedSchemas">The visited schemas.</param>
+        /// <returns>
+        /// return found XmlSchemaElement or null value
+        /// </returns>
+        private XmlSchemaElement SearchElementInSchema(CodeTypeDeclaration codeTypeDeclaration, XmlSchema schema, List<XmlSchema> visitedSchemas)
+        {
+            foreach (var item in schema.Items)
+            {
+                var xmlElement = item as XmlSchemaElement;
+                if (xmlElement == null) continue;
+
+                var xmlSubElement = this.SearchElement(codeTypeDeclaration, xmlElement, string.Empty, string.Empty);
+                if (xmlSubElement != null) return xmlSubElement;
+            }
+
+            // If not found search in schema inclusion
+            foreach (var item in schema.Includes)
+            {
+                var schemaInc = item as XmlSchemaInclude;
+
+                // avoid to follow cyclic refrence
+                if ((schemaInc == null) || visitedSchemas.Exists(loc => schemaInc.Schema == loc))
+                    continue;
+
+                visitedSchemas.Add(schemaInc.Schema);
+                var includeElmts = this.SearchElementInSchema(codeTypeDeclaration, schemaInc.Schema, visitedSchemas);
+                visitedSchemas.Remove(schemaInc.Schema);
+
+                if (includeElmts != null) return includeElmts;
+            }
+
+            return null;
         }
         #endregion
     }

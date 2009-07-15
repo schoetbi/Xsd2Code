@@ -29,21 +29,34 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnSetAsDefault = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnGenerate = new System.Windows.Forms.Button();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
+            this.linkToCodePlex = new System.Windows.Forms.LinkLabel();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.btnSetAsDefault);
             this.panel1.Controls.Add(this.btnCancel);
             this.panel1.Controls.Add(this.btnGenerate);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 505);
+            this.panel1.Location = new System.Drawing.Point(0, 531);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(438, 32);
             this.panel1.TabIndex = 2;
+            // 
+            // btnSetAsDefault
+            // 
+            this.btnSetAsDefault.Location = new System.Drawing.Point(15, 6);
+            this.btnSetAsDefault.Name = "btnSetAsDefault";
+            this.btnSetAsDefault.Size = new System.Drawing.Size(83, 23);
+            this.btnSetAsDefault.TabIndex = 4;
+            this.btnSetAsDefault.Text = "Set as default";
+            this.btnSetAsDefault.UseVisualStyleBackColor = true;
+            this.btnSetAsDefault.Visible = false;
             // 
             // btnCancel
             // 
@@ -70,25 +83,38 @@
             // 
             this.propertyGrid.Location = new System.Drawing.Point(12, 12);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(414, 487);
+            this.propertyGrid.Size = new System.Drawing.Size(414, 501);
             this.propertyGrid.TabIndex = 19;
+            // 
+            // linkToCodePlex
+            // 
+            this.linkToCodePlex.AutoSize = true;
+            this.linkToCodePlex.Location = new System.Drawing.Point(12, 515);
+            this.linkToCodePlex.Name = "linkToCodePlex";
+            this.linkToCodePlex.Size = new System.Drawing.Size(185, 13);
+            this.linkToCodePlex.TabIndex = 20;
+            this.linkToCodePlex.TabStop = true;
+            this.linkToCodePlex.Text = "http://www.codeplex.com/Xsd2Code";
+            this.linkToCodePlex.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkToCodePlex_LinkClicked);
             // 
             // FormOption
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(438, 537);
+            this.ClientSize = new System.Drawing.Size(438, 563);
+            this.Controls.Add(this.linkToCodePlex);
             this.Controls.Add(this.propertyGrid);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "FormOption";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Xsd2Code Generator 2.8";
+            this.Text = "Xsd2Code class generator";
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.FormOption_KeyPress);
             this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -98,6 +124,8 @@
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnGenerate;
         private System.Windows.Forms.PropertyGrid propertyGrid;
+        private System.Windows.Forms.Button btnSetAsDefault;
+        private System.Windows.Forms.LinkLabel linkToCodePlex;
 
     }
 }

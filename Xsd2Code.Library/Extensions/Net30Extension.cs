@@ -141,23 +141,23 @@ namespace Xsd2Code.Library.Extensions
         /// Property process
         /// </summary>
         /// <param name="type">Represents a type declaration for a class, structure, interface, or enumeration</param>
+        /// <param name="ns">The ns.</param>
         /// <param name="member">Type members include fields, methods, properties, constructors and nested types</param>
         /// <param name="xmlElement">Represent the root element in schema</param>
         /// <param name="schema">XML Schema</param>
-        protected override void ProcessProperty(CodeTypeDeclaration type, CodeTypeMember member, XmlSchemaElement xmlElement, XmlSchema schema)
+        protected override void ProcessProperty(CodeTypeDeclaration type, CodeNamespace ns, CodeTypeMember member, XmlSchemaElement xmlElement, XmlSchema schema)
         {
             // Get now if property is array before base.ProcessProperty call.
             var prop = (CodeMemberProperty)member;
-            bool isArray = prop.Type.ArrayElementType != null;
-
-            base.ProcessProperty(type, member, xmlElement, schema);
+            
+            base.ProcessProperty(type, ns, member, xmlElement, schema);
 
             // Generate automatic properties.
             if (GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
             {
                 if (GeneratorContext.GeneratorParams.AutomaticProperties)
                 {
-                    if (!isArray)
+                    if (!this.IsComplexType(prop.Type, ns))
                     {
                         this.autoPropertyListField.Add(member as CodeMemberProperty);
                     }
