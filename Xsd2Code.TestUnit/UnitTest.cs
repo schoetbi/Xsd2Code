@@ -173,18 +173,36 @@ namespace Xsd2Code.TestUnit
             // Copy resource file to the run-time directory
             string inputFilePath = GetInputFilePath("Dvd.xsd", Resources.dvd);
             var paremters = GetGeneratorParams(inputFilePath);
-            paremters.CollectionObjectType = CollectionType.ObservableCollection;
+            paremters.CollectionObjectType = CollectionType.List;
             paremters.TargetFramework = TargetFramework.Net35;
             paremters.EnableDataBinding = false;
+            paremters.EnableSummaryComment = true;
+            paremters.GenerateDataContracts = false;
+            paremters.UseGenericBaseClass = true;
+            paremters.GenerateXMLAttributes = true;
+            paremters.AutomaticProperties = true;
+
             var xsdGen = new GeneratorFacade(paremters);
             var result = xsdGen.Generate();
 
+            // Create new dvd collection and save it to file
             DvdCollection dvd = new DvdCollection();
             dvd.Dvds.Add(new dvd { Title = "Matrix" });
-            string serializedFisrt = dvd.Serialize();
-            var dvdInst = DvdCollection.Deserialize(serializedFisrt);
+            var newitem = new dvd();
+            newitem.Actor.Add(new Actor { firstname = "James", nationality = "Us" });
+            dvd.Dvds.Add(newitem);
+            var originalXml = dvd.Serialize();
+            dvd.SaveToFile("dvd.xml");
 
-            Assert.IsTrue(result.Success, result.Messages.ToString());
+            // Load data fom file and serialize it again.
+            var loadedDvdCollection = DvdCollection.LoadFromFile("dvd.xml");
+            var finalXml = loadedDvdCollection.Serialize();
+
+            // Then comprate two xml string
+            if (!originalXml.Equals(finalXml))
+            {
+                Assert.Fail("Xml value are not equals");
+            }
         }
 
 
@@ -324,6 +342,28 @@ namespace Xsd2Code.TestUnit
 
             if (!result.Success) Assert.Fail(result.Messages.ToString());
         }
+
+        [TestMethod]
+        public void TestAnnotations()
+        {
+            // Get the code namespace for the schema.
+            string inputFilePath = GetInputFilePath("TestAnnotations.xsd", Resources.TestAnnotations);
+
+            var generatorParams = new GeneratorParams();
+            generatorParams.InputFilePath = inputFilePath;
+            GetGeneratorParams(inputFilePath);
+
+            generatorParams.EnableSummaryComment = true;
+            generatorParams.TargetFramework = TargetFramework.Net35;
+            generatorParams.AutomaticProperties = true;
+            generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".TestAnnotations.cs");
+
+            var xsdGen = new GeneratorFacade(generatorParams);
+            var result = xsdGen.Generate();
+
+            if (!result.Success) Assert.Fail(result.Messages.ToString());
+        }
+
         [TestMethod]
         public void WcfAttributes()
         {

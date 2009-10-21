@@ -37,6 +37,7 @@ namespace Xsd2Code.Library.Extensions
     /// </summary>
     public abstract class CodeExtension : ICodeExtension
     {
+        #region private fields
         /// <summary>
         /// Sorted list for custom collection
         /// </summary>
@@ -51,6 +52,13 @@ namespace Xsd2Code.Library.Extensions
         /// Contains all collection fields.
         /// </summary>
         private static List<string> lasyLoadingFields = new List<string>();
+
+        /// <summary>
+        /// Contains all collection fields.
+        /// </summary>
+        protected static List<string> collectionTypesFields = new List<string>();
+
+        #endregion
 
         #region public method
         /// <summary>
@@ -1118,8 +1126,8 @@ namespace Xsd2Code.Library.Extensions
                 {
                     foreach (XmlSchemaObject item in xmlSequence.Items)
                     {
-                        var currentItem = item as XmlSchemaElement;
-                        if (currentItem == null)
+                        var currentXmlSchemaElement = item as XmlSchemaElement;
+                        if (currentXmlSchemaElement == null)
                             continue;
 
                         if (hierarchicalElmtName == xmlElement.QualifiedName.Name ||
@@ -1128,7 +1136,7 @@ namespace Xsd2Code.Library.Extensions
 
                         XmlSchemaElement subItem = this.SearchElement(
                                                                       type,
-                                                                      currentItem,
+                                                                      currentXmlSchemaElement,
                                                                       xmlElement.QualifiedName.Name,
                                                                       hierarchicalElmtName + xmlElement.QualifiedName.Name);
                         if (subItem != null)
@@ -1329,6 +1337,7 @@ namespace Xsd2Code.Library.Extensions
             if (prop.Type.ArrayElementType != null)
             {
                 prop.Type = this.GetCollectionType(prop.Type);
+                collectionTypesFields.Add(prop.Name);
             }
 
             if (GeneratorContext.GeneratorParams.GenerateDataContracts)
@@ -1392,14 +1401,14 @@ namespace Xsd2Code.Library.Extensions
                             // ---------------------------------------------
                             // if ((xxxField != null)) { ... }
                             // ---------------------------------------------
-                            var condStatmentCondNotNull =
-                                new CodeConditionStatement(
-                                    new CodeBinaryOperatorExpression(
-                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
-                                                                         cfreL.FieldName),
-                                        CodeBinaryOperatorType.IdentityInequality, new CodePrimitiveExpression(null)),
-                                    new CodeStatement[] { condStatmentCondEquals },
-                                    CodeDomHelper.CodeStmtColToArray(setValueCondition));
+                            var condStatmentCondNotNull = new CodeConditionStatement(
+                                new CodeBinaryOperatorExpression(
+                                    new CodeFieldReferenceExpression(
+                                        new CodeThisReferenceExpression(), cfreL.FieldName),
+                                        CodeBinaryOperatorType.IdentityInequality,
+                                        new CodePrimitiveExpression(null)),
+                                        new CodeStatement[] { condStatmentCondEquals },
+                                        CodeDomHelper.CodeStmtColToArray(setValueCondition));
 
                             var property = member as CodeMemberProperty;
                             if (property != null)
@@ -1419,7 +1428,6 @@ namespace Xsd2Code.Library.Extensions
                         else
                             prop.SetStatements.Add(propChange);
                     }
-
                 }
             }
         }
@@ -1582,7 +1590,6 @@ namespace Xsd2Code.Library.Extensions
             // private static System.Xml.Serialization.XmlSerializer serializer;
             // -----------------------------------------------------------------
             var serializerfield = new CodeMemberField(typeof(XmlSerializer), "serializer");
-            serializerfield.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, "Private fields"));
             serializerfield.Attributes = MemberAttributes.Static | MemberAttributes.Private;
             classType.Members.Add(serializerfield);
 
@@ -1613,7 +1620,6 @@ namespace Xsd2Code.Library.Extensions
             serializerProperty.GetStatements.Add(
                 new CodeMethodReturnStatement(new CodeSnippetExpression("serializer")));
 
-            serializerProperty.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, "Private fields"));
             classType.Members.Add(serializerProperty);
         }
 
@@ -1667,7 +1673,10 @@ namespace Xsd2Code.Library.Extensions
             foreach (var item in schema.Items)
             {
                 var xmlElement = item as XmlSchemaElement;
-                if (xmlElement == null) continue;
+                if (xmlElement == null)
+                {
+                    continue;
+                }
 
                 var xmlSubElement = this.SearchElement(codeTypeDeclaration, xmlElement, string.Empty, string.Empty);
                 if (xmlSubElement != null) return xmlSubElement;

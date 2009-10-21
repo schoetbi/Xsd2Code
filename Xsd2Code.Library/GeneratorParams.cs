@@ -263,7 +263,7 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Gets or sets a value indicating the name of Serialize method.
         /// </summary>
-        [Category("Serialize"), DefaultValue(true), Description("Use generic patial base class for all methods")]
+        [Category("Serialize"), DefaultValue(false), Description("Use generic patial base class for all methods")]
         public bool UseGenericBaseClass { get; set; }
 
         /// <summary>

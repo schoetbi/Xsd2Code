@@ -28,12 +28,12 @@ namespace Xsd2Code.Library.Extensions
         /// List the properties that will change to auto properties
         /// </summary>
         private readonly List<CodeMemberProperty> autoPropertyListField = new List<CodeMemberProperty>();
-        
+
         /// <summary>
         /// List the fields to be deleted
         /// </summary>
         private readonly List<CodeMemberField> fieldListToRemoveField = new List<CodeMemberField>();
-        
+
         /// <summary>
         /// List fields that require an initialization in the constructor
         /// </summary>
@@ -149,7 +149,7 @@ namespace Xsd2Code.Library.Extensions
         {
             // Get now if property is array before base.ProcessProperty call.
             var prop = (CodeMemberProperty)member;
-            
+
             base.ProcessProperty(type, ns, member, xmlElement, schema);
 
             // Generate automatic properties.
@@ -159,14 +159,18 @@ namespace Xsd2Code.Library.Extensions
                 {
                     if (!this.IsComplexType(prop.Type, ns))
                     {
-                        this.autoPropertyListField.Add(member as CodeMemberProperty);
+                        // Exclude collection type
+                        if (collectionTypesFields.IndexOf(prop.Name) == -1)
+                        {
+                            this.autoPropertyListField.Add(member as CodeMemberProperty);
+                        }
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Field process.
+        /// process Fields.
         /// </summary>
         /// <param name="member">CodeTypeMember member</param>
         /// <param name="ctor">CodeMemberMethod constructor</param>
@@ -223,6 +227,21 @@ namespace Xsd2Code.Library.Extensions
         }
         #endregion
 
+        /// <summary>
+        /// Outputs the attribute argument.
+        /// </summary>
+        /// <param name="arg">Represents an argument used in a metadata attribute declaration.</param>
+        /// <returns>transform attribute into srting</returns>
+        private static string ExpressionToString(CodeExpression arg)
+        {
+            var strWriter = new StringWriter();
+            var provider = CodeDomProviderFactory.GetProvider(GeneratorContext.GeneratorParams.Language);
+            provider.GenerateCodeFromExpression(arg, strWriter, new CodeGeneratorOptions());
+            var strrdr = new StringReader(strWriter.ToString());
+            return strrdr.ReadToEnd();
+        }
+
+
         #region Private methods
         /// <summary>
         /// Generates the automatic properties.
@@ -274,10 +293,13 @@ namespace Xsd2Code.Library.Extensions
                             {
                                 cm.Text += "    " + attribute + "\n";
                             }
+                            var ct = new CodeTypeReferenceExpression(item.Type);
+                            var prop = ExpressionToString(ct);
 
-                            var text = string.Format("    public {0} {1} ", item.Type.BaseType, item.Name);
+                            var text = string.Format("    public {0} {1} ", prop, item.Name);
                             cm.Text += string.Concat(text, "{get; set;}\n");
                             cm.Comments.AddRange(item.Comments);
+
                             type.Members.Add(cm);
                             type.Members.Remove(item);
                         }

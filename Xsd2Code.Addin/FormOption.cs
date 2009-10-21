@@ -48,7 +48,7 @@ namespace Xsd2Code.Addin
         /// <param name="xsdFilePath">The XSD file path.</param>
         /// <param name="languageIdentifier">The language identifier.</param>
         /// <param name="defaultNamespace">The default namespace.</param>
-        public void Init(string xsdFilePath, string languageIdentifier, string defaultNamespace)
+        public void Init(string xsdFilePath, string languageIdentifier, string defaultNamespace, TargetFramework framework)
         {
             string outputFile;
             this.generatorParams = GeneratorParams.LoadFromFile(xsdFilePath, out outputFile);
@@ -68,6 +68,7 @@ namespace Xsd2Code.Addin
                         this.generatorParams.Language = GenerationLanguage.CSharp;
                         break;
                 }
+                this.generatorParams.TargetFramework = framework;
                 this.generatorParams.NameSpace = defaultNamespace;
             }
 

@@ -46,6 +46,9 @@
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.XML" />
+    <Reference Include="WindowsBase">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -93,6 +96,7 @@
     <None Include="xsd\Hierarchical.xsd" />
     <None Include="xsd\ReproSchema.xsd" />
     <None Include="xsd\StackOverFlow.xsd" />
+    <EmbeddedResource Include="xsd\TestAnnotations.xsd" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Xsd2Code.Library\Xsd2Code.Library.csproj">
