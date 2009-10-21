@@ -162,7 +162,20 @@ namespace Xsd2Code.Library.Extensions
                         // Exclude collection type
                         if (collectionTypesFields.IndexOf(prop.Name) == -1)
                         {
-                            this.autoPropertyListField.Add(member as CodeMemberProperty);
+                            // Get private fieldName
+                            var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
+                            if (propReturnStatment != null)
+                            {
+                                var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
+                                if (field != null)
+                                {
+                                    // Check if private field don't need initialisation in ctor (defaut value).
+                                    if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.FieldName) == -1)
+                                    {
+                                        this.autoPropertyListField.Add(member as CodeMemberProperty);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -191,11 +204,14 @@ namespace Xsd2Code.Library.Extensions
                 {
                     if (!isArray)
                     {
-                        // If this field is not assigned in ctor, add it in remove list.
-                        // with automatic property, don't need to keep private field.
-                        if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.Name) == -1)
+                        if (!this.IsComplexType(field.Type, ns))
                         {
-                            this.fieldListToRemoveField.Add(field);
+                            // If this field is not assigned in ctor, add it in remove list.
+                            // with automatic property, don't need to keep private field.
+                            if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.Name) == -1)
+                            {
+                                this.fieldListToRemoveField.Add(field);
+                            }
                         }
                     }
                 }

@@ -84,9 +84,10 @@ namespace Xsd2Code.TestUnit
             string inputFilePath = GetInputFilePath("CircularClassReference.xsd", Resources.CircularClassReference);
             var parameters = new GeneratorParams();
             parameters.InputFilePath = inputFilePath;
-            parameters.TargetFramework = TargetFramework.Net35;
+            parameters.TargetFramework = TargetFramework.Net20;
             parameters.AutomaticProperties = true;
             parameters.IncludeSerializeMethod = false;
+            parameters.UseGenericBaseClass = false;
 
             var xsdGen = new GeneratorFacade(parameters);
             var result = xsdGen.Generate();
@@ -101,7 +102,6 @@ namespace Xsd2Code.TestUnit
 
                 Assert.Fail(e.Message);
             }
-            
         }
 
         [TestMethod]

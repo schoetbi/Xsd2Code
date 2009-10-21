@@ -1,6 +1,4 @@
-﻿Release 2.8.6
-
-Release 2.8.6.0
+﻿Release 3.0.0.0
 ---------------
 2009-05-27, PC : Apply patch Patch fixing error "SimpleType has already been declared", Cyclic Schema Reference
 				 http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=7285
@@ -10,8 +8,13 @@ Release 2.8.6.0
 				 Fix warnning when setter test if field is null on enum type.
 				 Refactoring, styleCop.
 2009-07-11, PC : Detect project langage and default project namespace.
-2009-17-15, PC : Use IsolateStrorageFile to save and load xml with silverlight.
-2009-17-15, PC : Add the initialization of the collections in the property according the lazy pattern.
-2009-17-15, PC : Fix bug stackoverflow in ctor in case of circular class reference.
-2009-17-15, PC : Detect target framework.
+2009-07-15, PC : Use IsolateStrorageFile to save and load xml with silverlight.
+2009-07-15, PC : Add the initialization of the collections in the property according the lazy pattern.
+2009-07-15, PC : Fix bug stackoverflow in ctor in case of circular class reference.
+2009-07-15, PC : Detect target framework.
+2009-10-21, PC : Fix bug of invalid type List'1 when use automatic properties.
+				 http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8943
+				 For optional items, an element is incorrectly instantiated in the constructor of the created code.
+				 http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8118
+				 
 		

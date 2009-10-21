@@ -71,6 +71,7 @@ namespace Xsd2Code.Library.Extensions
             this.ImportNamespaces(code);
             CollectionTypes.Clear();
             lasyLoadingFields.Clear();
+            collectionTypesFields.Clear();
 
             var types = new CodeTypeDeclaration[code.Types.Count];
             code.Types.CopyTo(types, 0);
