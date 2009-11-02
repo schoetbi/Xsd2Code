@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Xml;
+using Microsoft.Win32;
 
 namespace Xsd2Code.SetupLibrary
 {
@@ -33,7 +34,24 @@ namespace Xsd2Code.SetupLibrary
         /// <summary>
         /// Saved state key  
         /// </summary>
-        private const string savedStateKey = "AddinPath";
+        private const string savedStateVs2008Key = "vs2008AddinPath";
+
+        /// <summary>
+        /// Saved state key  
+        /// </summary>
+        private const string savedStateVs2010Key = "vs2010AddinPath";
+
+
+        /// <summary>
+        /// Vs2008 registry key
+        /// </summary>
+        private const string vs2008Key = @"SOFTWARE\Microsoft\VisualStudio\9.0";
+
+        /// <summary>
+        /// Vs2010 registry key
+        /// </summary>
+        private const string vs2010Key = @"SOFTWARE\Microsoft\VisualStudio\10.0";
+
 
         /// <summary>
         /// Constructor. Initializes components.
@@ -53,25 +71,18 @@ namespace Xsd2Code.SetupLibrary
         {
             base.Install(savedState);
 
-            // Parameters required to pass in from installer
-
-/* RU20090225: Not being used. Remove?
-            string productName = this.Context.Parameters["ProductName"];
-            string assemblyName = this.Context.Parameters["AssemblyName"];
-*/
-
             // Setup .addin path and assembly path
-            string addinTargetPath = Path.Combine(
+            string vs2008AddinTarget = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 @"Visual Studio 2008\Addins");
 
-            string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string vs2010AddinTarget = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                @"Visual Studio 2010\Addins");
 
+            string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             try
             {
-                var targetFolder = new DirectoryInfo(addinTargetPath);
-                if (!targetFolder.Exists) targetFolder.Create();
-
                 string sourceFile = Path.Combine(assemblyPath, addinControlFileName);
 
                 var addinXml = new XmlDocument();
@@ -92,12 +103,25 @@ namespace Xsd2Code.SetupLibrary
 
                 addinXml.Save(sourceFile);
 
-                string targetFile = Path.Combine(addinTargetPath, addinControlFileName);
-                File.Copy(sourceFile, targetFile, true);
+                if (!string.IsNullOrEmpty(GetRegisteryValue(Registry.LocalMachine, vs2008Key, "InstallDir")))
+                {
+                    var targetFolder = new DirectoryInfo(vs2008AddinTarget);
+                    if (!targetFolder.Exists) targetFolder.Create();
 
-                // Save AddinPath to be used in Uninstall or Rollback
+                    string targetFile = Path.Combine(vs2008AddinTarget, addinControlFileName);
+                    File.Copy(sourceFile, targetFile, true);
+                    savedState.Add(savedStateVs2008Key, targetFile);
+                }
 
-                savedState.Add(savedStateKey, targetFile);
+                if (!string.IsNullOrEmpty(GetRegisteryValue(Registry.LocalMachine, vs2010Key, "InstallDir")))
+                {
+                    var targetFolder = new DirectoryInfo(vs2010AddinTarget);
+                    if (!targetFolder.Exists) targetFolder.Create();
+
+                    string targetFile = Path.Combine(vs2010AddinTarget, addinControlFileName);
+                    File.Copy(sourceFile, targetFile, true);
+                    savedState.Add(savedStateVs2010Key, targetFile);
+                }
             }
             catch (Exception ex)
             {
@@ -123,8 +147,17 @@ namespace Xsd2Code.SetupLibrary
 
             try
             {
-                var fileName = (string)savedState[savedStateKey];
-                if (File.Exists(fileName)) File.Delete(fileName);
+                var fileName = (string)savedState[savedStateVs2008Key];
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    if (File.Exists(fileName)) File.Delete(fileName);
+                }
+
+                fileName = (string)savedState[savedStateVs2010Key];
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    if (File.Exists(fileName)) File.Delete(fileName);
+                }
             }
             catch (Exception ex)
             {
@@ -138,19 +171,45 @@ namespace Xsd2Code.SetupLibrary
         /// <param name="savedState">The saved state.</param>
         public override void Uninstall(IDictionary savedState)
         {
-            ////Debugger.Break();
-
-            base.Uninstall(savedState);
+             base.Uninstall(savedState);
 
             try
             {
-                var fileName = (string)savedState[savedStateKey];
-                if (File.Exists(fileName)) File.Delete(fileName);
+                var fileName = (string)savedState[savedStateVs2008Key];
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    if (File.Exists(fileName)) File.Delete(fileName);
+                }
+
+                fileName = (string)savedState[savedStateVs2010Key];
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    if (File.Exists(fileName)) File.Delete(fileName);
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.ToString());
             }
+        }
+
+        /// <summary>
+        /// Gets the registery value.
+        /// </summary>
+        /// <param name="hklm">The HKLM.</param>
+        /// <param name="rootKey">The root key.</param>
+        /// <param name="keyName">Name of the key.</param>
+        /// <returns></returns>
+        public static string GetRegisteryValue(RegistryKey hklm, string rootKey, string keyName)
+        {
+            string result = string.Empty;
+            hklm = hklm.OpenSubKey(rootKey, false);
+            var val = hklm.GetValue(keyName);
+            if (val != null)
+            {
+                return val.ToString();
+            }
+            return string.Empty;
         }
     }
 }
