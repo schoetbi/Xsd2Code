@@ -344,6 +344,33 @@ namespace Xsd2Code.TestUnit
         }
 
         [TestMethod]
+        public void UseBaseClass()
+        {
+            // Get the code namespace for the schema.
+            GetInputFilePath("Actor.xsd", Resources.Actor);
+            string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
+
+            string outputFilePath = Path.ChangeExtension(inputFilePath, ".baseClass.cs");
+            var generatorParams = new GeneratorParams
+                                      {
+                                          InputFilePath = inputFilePath,
+                                          TargetFramework = TargetFramework.Net30,
+                                          EnableSummaryComment = true,
+                                          GenerateDataContracts = true,
+                                          AutomaticProperties = false,
+                                          EnableDataBinding = true,
+                                          UseGenericBaseClass = true,
+                                          BaseClassName = "EntityObject",
+                                          OutputFilePath = outputFilePath
+                                      };
+
+            var xsdGen = new GeneratorFacade(generatorParams);
+            var result = xsdGen.Generate();
+
+            if (!result.Success) Assert.Fail(result.Messages.ToString());
+        }
+
+        [TestMethod]
         public void TestAnnotations()
         {
             // Get the code namespace for the schema.
