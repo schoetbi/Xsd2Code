@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.Reflection;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Xsd2Code.Library;
+using Xsd2Code.Library.Helpers;
 using Xsd2Code.TestUnit.Properties;
 
 namespace Xsd2Code.TestUnit
@@ -22,6 +24,9 @@ namespace Xsd2Code.TestUnit
     [TestClass]
     public class UnitTest
     {
+        private readonly object testLock = new object();
+        static readonly object fileLock = new object();
+
         /// <summary>
         /// Output folder: TestResults folder relative to the solution root folder
         /// </summary>
@@ -65,13 +70,16 @@ namespace Xsd2Code.TestUnit
         [TestMethod]
         public void Circular()
         {
-            // Copy resource file to the run-time directory
-            string inputFilePath = GetInputFilePath("Circular.xsd", Resources.Circular);
+            lock (testLock)
+            {
+                // Copy resource file to the run-time directory
+                string inputFilePath = GetInputFilePath("Circular.xsd", Resources.Circular);
 
-            var xsdGen = new GeneratorFacade(GetGeneratorParams(inputFilePath));
-            var result = xsdGen.Generate();
+                var xsdGen = new GeneratorFacade(GetGeneratorParams(inputFilePath));
+                var result = xsdGen.Generate();
 
-            Assert.IsTrue(result.Success, result.Messages.ToString());
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+            }
         }
 
         /// <summary>
@@ -80,131 +88,189 @@ namespace Xsd2Code.TestUnit
         [TestMethod]
         public void CircularClassReference()
         {
-            // Copy resource file to the run-time directory
-            string inputFilePath = GetInputFilePath("CircularClassReference.xsd", Resources.CircularClassReference);
-            var parameters = new GeneratorParams();
-            parameters.InputFilePath = inputFilePath;
-            parameters.TargetFramework = TargetFramework.Net20;
-            parameters.AutomaticProperties = true;
-            parameters.IncludeSerializeMethod = false;
-            parameters.UseGenericBaseClass = false;
-
-            var xsdGen = new GeneratorFacade(parameters);
-            var result = xsdGen.Generate();
-
-            try
-            {
-                Circular cs = new Circular();
-                int count = cs.circular.count;
-            }
-            catch (Exception e)
+            lock (testLock)
             {
 
-                Assert.Fail(e.Message);
+                // Copy resource file to the run-time directory
+                string inputFilePath = GetInputFilePath("CircularClassReference.xsd", Resources.CircularClassReference);
+                var generatorParams = new GeneratorParams
+                                          {
+                                              InputFilePath = inputFilePath,
+                                              TargetFramework = TargetFramework.Net20,
+                                              AutomaticProperties = true,
+                                              IncludeSerializeMethod = false,
+                                              UseGenericBaseClass = false,
+                                              OutputFilePath = GetOutputFilePath(inputFilePath)
+
+                                          };
+
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                try
+                {
+                    var cs = new Circular();
+
+#pragma warning disable 168
+                    int count = cs.circular.count;
+#pragma warning restore 168
+
+                    var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                    Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+                }
+                catch (Exception e)
+                {
+                    Assert.Fail(e.Message);
+                }
             }
         }
 
         [TestMethod]
         public void ArrayOfArray()
         {
-            // Copy resource file to the run-time directory
-            string inputFilePath = GetInputFilePath("ArrayOfArray.xsd", Resources.ArrayOfArray);
+            lock (testLock)
+            {
 
-            var xsdGen = new GeneratorFacade(new GeneratorParams() { GenerateCloneMethod = true, IncludeSerializeMethod = true, AutomaticProperties = true, InputFilePath = inputFilePath, NameSpace = "MyNameSpace", CollectionObjectType = CollectionType.Array, EnableDataBinding = true, Language = GenerationLanguage.CSharp });
-            var result = xsdGen.Generate();
+                // Copy resource file to the run-time directory
+                var inputFilePath = GetInputFilePath("ArrayOfArray.xsd", Resources.ArrayOfArray);
 
-            Assert.IsTrue(result.Success, result.Messages.ToString());
+                var generatorParams = new GeneratorParams
+                                          {
+                                              GenerateCloneMethod = true,
+                                              IncludeSerializeMethod = true,
+                                              AutomaticProperties = true,
+                                              InputFilePath = inputFilePath,
+                                              NameSpace = "MyNameSpace",
+                                              CollectionObjectType = CollectionType.Array,
+                                              EnableDataBinding = true,
+                                              Language = GenerationLanguage.CSharp,
+                                              OutputFilePath = Path.ChangeExtension(inputFilePath, ".TestGenerated.cs")
+                                          };
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
+
         /// <summary>
         /// Stacks the over flow.
         /// </summary>
         [TestMethod]
         public void StackOverFlow()
         {
-            // Copy resource file to the run-time directory
-            string inputFilePath = GetInputFilePath("StackOverFlow.xsd", Resources.StackOverFlow);
+            lock (testLock)
+            {
 
-            var xsdGen = new GeneratorFacade(GetGeneratorParams(inputFilePath));
-            var result = xsdGen.Generate();
+                // Copy resource file to the run-time directory
+                string inputFilePath = GetInputFilePath("StackOverFlow.xsd", Resources.StackOverFlow);
 
-            Assert.IsTrue(result.Success, result.Messages.ToString());
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         [TestMethod]
         public void Deserialize_ArrayOfMyElement()
         {
-            ArrayOfMyElement e = new ArrayOfMyElement();
-            MyElement myE = new MyElement();
-            myE.Name = "Name";
-            myE.AttributeLists.Add(new NameValuePair() { Name = "Name", Value = "Value" });
-            e.MyElement.Add(myE);
-            Exception ex = null;
-
-            string serialized = e.Serialize();
-            e.SaveToFile("ReproSampleFile.xml", out ex);
-            //try to deserialize
-
-            //generate doc conformant to schema
-
-            ArrayOfMyElement toDeserialize = new ArrayOfMyElement();
-            if (!ArrayOfMyElement.LoadFromFile("ReproSampleFile.xml", out toDeserialize, out ex))
+            lock (testLock)
             {
-                Console.WriteLine("Unable to deserialize, will exit");
-                return;
+
+                var e = new ArrayOfMyElement();
+                var myE = new MyElement {Name = "Name"};
+                myE.AttributeLists.Add(new NameValuePair {Name = "Name", Value = "Value"});
+                e.MyElement.Add(myE);
+                Exception ex;
+
+                var serialized = e.Serialize();
+                e.SaveToFile(Path.Combine(OutputFolder, "ReproSampleFile.xml"), out ex);
+                if (ex != null) throw ex;
+
+                //try to deserialize
+
+                //generate doc conformant to schema
+
+                ArrayOfMyElement toDeserialize;
+                if (!ArrayOfMyElement.LoadFromFile("ReproSampleFile.xml", out toDeserialize, out ex))
+                {
+                    Console.WriteLine("Unable to deserialize, will exit");
+                    return;
+                }
+
+                var serialized2 = toDeserialize.Serialize();
+
+                Console.WriteLine("Still missing the <NameValuePairElement>");
+                Console.WriteLine(serialized);
+
+                Console.WriteLine("Name value pairs elements missing");
+                Console.WriteLine(serialized2);
             }
-
-            string serialized2 = toDeserialize.Serialize();
-
-            Console.WriteLine("Still missing the <NameValuePairElement>");
-            Console.WriteLine(serialized);
-
-            Console.WriteLine("Name value pairs elements missing");
-            Console.WriteLine(serialized2);
         }
+
         /// <summary>
         /// DVDs this instance.
         /// </summary>
         [TestMethod]
         public void Dvd()
         {
-            // Copy resource file to the run-time directory
-            GetInputFilePath("Actor.xsd", Resources.Actor);
-
-            // Copy resource file to the run-time directory
-            string inputFilePath = GetInputFilePath("Dvd.xsd", Resources.dvd);
-            var paremters = GetGeneratorParams(inputFilePath);
-            paremters.CollectionObjectType = CollectionType.List;
-            paremters.TargetFramework = TargetFramework.Net35;
-            paremters.EnableDataBinding = false;
-            paremters.EnableSummaryComment = true;
-            paremters.GenerateDataContracts = false;
-            paremters.UseGenericBaseClass = true;
-            paremters.GenerateXMLAttributes = true;
-            paremters.AutomaticProperties = true;
-
-            var xsdGen = new GeneratorFacade(paremters);
-            var result = xsdGen.Generate();
-
-            // Create new dvd collection and save it to file
-            DvdCollection dvd = new DvdCollection();
-            dvd.Dvds.Add(new dvd { Title = "Matrix" });
-            var newitem = new dvd();
-            newitem.Actor.Add(new Actor { firstname = "James", nationality = "Us" });
-            dvd.Dvds.Add(newitem);
-            var originalXml = dvd.Serialize();
-            dvd.SaveToFile("dvd.xml");
-
-            // Load data fom file and serialize it again.
-            var loadedDvdCollection = DvdCollection.LoadFromFile("dvd.xml");
-            var finalXml = loadedDvdCollection.Serialize();
-
-            // Then comprate two xml string
-            if (!originalXml.Equals(finalXml))
+            lock (testLock)
             {
-                Assert.Fail("Xml value are not equals");
+
+                // Copy resource file to the run-time directory
+                GetInputFilePath("Actor.xsd", Resources.Actor);
+
+                // Copy resource file to the run-time directory
+                string inputFilePath = GetInputFilePath("Dvd.xsd", Resources.dvd);
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.CollectionObjectType = CollectionType.List;
+                generatorParams.TargetFramework = TargetFramework.Net35;
+                generatorParams.EnableDataBinding = false;
+                generatorParams.EnableSummaryComment = true;
+                generatorParams.GenerateDataContracts = false;
+                generatorParams.UseGenericBaseClass = true;
+                generatorParams.GenerateXMLAttributes = true;
+                generatorParams.AutomaticProperties = true;
+
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                // Create new dvd collection and save it to file
+                var dvd = new DvdCollection();
+                dvd.Dvds.Add(new dvd {Title = "Matrix"});
+                var newitem = new dvd();
+                newitem.Actor.Add(new Actor {firstname = "James", nationality = "Us"});
+                dvd.Dvds.Add(newitem);
+                var originalXml = dvd.Serialize();
+                dvd.SaveToFile("dvd.xml");
+
+                // Load data fom file and serialize it again.
+                var loadedDvdCollection = DvdCollection.LoadFromFile("dvd.xml");
+                var finalXml = loadedDvdCollection.Serialize();
+
+                // Then comprate two xml string
+                if (!originalXml.Equals(finalXml))
+                {
+                    Assert.Fail("Xml value are not equals");
+                }
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+
             }
         }
-
 
         /// <summary>
         /// Genders this instance.
@@ -212,24 +278,39 @@ namespace Xsd2Code.TestUnit
         [TestMethod]
         public void Gender()
         {
-            // Get the code namespace for the schema.
-            string inputFilePath = GetInputFilePath("Gender.xsd", Resources.Gender);
+            lock (testLock)
+            {
 
-            var xsdGen = new GeneratorFacade(GetGeneratorParams(inputFilePath));
+                // Get the code namespace for the schema.
+                string inputFilePath = GetInputFilePath("Gender.xsd", Resources.Gender);
 
-            var result = xsdGen.Generate();
-            if (!result.Success)
-                Assert.Fail(result.Messages.ToString());
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.TargetFramework = TargetFramework.Net30;
+                generatorParams.AutomaticProperties = true;
+                generatorParams.GenerateDataContracts = true;
+                generatorParams.GenerateXMLAttributes = true;
+                generatorParams.OutputFilePath = GetOutputFilePath(inputFilePath);
 
-            var genderRoot = new Root
-                                 {
-                                     GenderAttribute = ksgender.female,
-                                     GenderAttributeSpecified = true,
-                                     GenderElement = ksgender.female,
-                                     GenderIntAttribute = "toto"
-                                 };
-            Exception exp;
-            genderRoot.SaveToFile(OutputFolder + @"gender.xml", out exp);
+                var xsdGen = new GeneratorFacade(generatorParams);
+
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var genderRoot = new Root
+                                     {
+                                         GenderAttribute = ksgender.female,
+                                         GenderAttributeSpecified = true,
+                                         GenderElement = ksgender.female,
+                                         GenderIntAttribute = "toto"
+                                     };
+                Exception ex;
+                genderRoot.SaveToFile(Path.Combine(OutputFolder, "gender.xml"), out ex);
+                if(ex!=null) throw ex;
+
+                var canCompile = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(canCompile.Success, canCompile.Messages.ToString());
+            }
         }
 
         /// <summary>
@@ -238,30 +319,45 @@ namespace Xsd2Code.TestUnit
         [TestMethod]
         public void AlowDebug()
         {
-            // Copy resource file to the run-time directory
-            GetInputFilePath("Actor.xsd", Resources.Actor);
-            string inputFilePath = GetInputFilePath("Dvd.xsd", Resources.dvd);
+            lock (testLock)
+            {
 
-            var generatorParams = GetGeneratorParams(inputFilePath);
-            generatorParams.DisableDebug = false;
-            generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".DebugEnabled.cs");
+                // Copy resource file to the run-time directory
+                GetInputFilePath("Actor.xsd", Resources.Actor);
+                string inputFilePath = GetInputFilePath("Dvd.xsd", Resources.dvd);
 
-            var xsdGen = new GeneratorFacade(generatorParams);
-            var result = xsdGen.Generate();
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.DisableDebug = false;
+                generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".DebugEnabled.cs");
 
-            Assert.IsTrue(result.Success, result.Messages.ToString());
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         [TestMethod]
         public void Hierarchical()
         {
-            // Copy resource file to the run-time directory
-            string inputFilePath = GetInputFilePath("Hierarchical.xsd", Resources.Hierarchical);
+            lock (testLock)
+            {
 
-            var xsdGen = new GeneratorFacade(GetGeneratorParams(inputFilePath));
-            var result = xsdGen.Generate();
+                // Copy resource file to the run-time directory
+                string inputFilePath = GetInputFilePath("Hierarchical.xsd", Resources.Hierarchical);
 
-            Assert.IsTrue(result.Success, result.Messages.ToString());
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         //[TestMethod]
@@ -286,127 +382,167 @@ namespace Xsd2Code.TestUnit
         [TestMethod]
         public void Silverlight()
         {
-            // Get the code namespace for the schema.
-            GetInputFilePath("Actor.xsd", Resources.Actor);
-            string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
+            lock (testLock)
+            {
 
-            var generatorParams = GetGeneratorParams(inputFilePath);
-            generatorParams.TargetFramework = TargetFramework.Silverlight;
-            generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".Silverlight20_01.cs");
+                // Get the code namespace for the schema.
+                GetInputFilePath("Actor.xsd", Resources.Actor);
+                string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
-            var xsdGen = new GeneratorFacade(generatorParams);
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.TargetFramework = TargetFramework.Silverlight;
+                generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath,
+                                                                      ".Silverlight20_01.cs");
 
-            var result = xsdGen.Generate();
-            if (!result.Success) Assert.Fail(result.Messages.ToString());
+                var xsdGen = new GeneratorFacade(generatorParams);
 
+                var result = xsdGen.Generate();
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+            }
         }
+
 
         [TestMethod]
         public void XMLAttributes()
         {
-            // Get the code namespace for the schema.
-            GetInputFilePath("Actor.xsd", Resources.Actor);
-            string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
+            lock (testLock)
+            {
 
-            var generatorParams = GetGeneratorParams(inputFilePath);
-            generatorParams.GenerateXMLAttributes = true;
+                // Get the code namespace for the schema.
+                GetInputFilePath("Actor.xsd", Resources.Actor);
+                string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
-            generatorParams.TargetFramework = TargetFramework.Net20;
-            generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".xml.cs");
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.GenerateXMLAttributes = true;
 
-            var xsdGen = new GeneratorFacade(generatorParams);
-            var result = xsdGen.Generate();
+                generatorParams.TargetFramework = TargetFramework.Net20;
+                generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".xml.cs");
 
-            if (!result.Success) Assert.Fail(result.Messages.ToString());
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         [TestMethod]
         public void AutomaticProperties()
         {
-            // Get the code namespace for the schema.
-            GetInputFilePath("Actor.xsd", Resources.Actor);
-            string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
+            lock (testLock)
+            {
 
-            var generatorParams = new GeneratorParams();
-            generatorParams.InputFilePath = inputFilePath;
-            GetGeneratorParams(inputFilePath);
-            generatorParams.EnableSummaryComment = true;
-            generatorParams.GenerateDataContracts = false;
-            generatorParams.AutomaticProperties = true;
+                // Get the code namespace for the schema.
+                GetInputFilePath("Actor.xsd", Resources.Actor);
+                string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
-            generatorParams.TargetFramework = TargetFramework.Net30;
-            generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".autoProp.cs");
+                var generatorParams = new GeneratorParams {InputFilePath = inputFilePath};
+                GetGeneratorParams(inputFilePath);
+                generatorParams.EnableSummaryComment = true;
+                generatorParams.GenerateDataContracts = false;
+                generatorParams.AutomaticProperties = true;
 
-            var xsdGen = new GeneratorFacade(generatorParams);
-            var result = xsdGen.Generate();
+                generatorParams.TargetFramework = TargetFramework.Net30;
+                generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".autoProp.cs");
 
-            if (!result.Success) Assert.Fail(result.Messages.ToString());
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         [TestMethod]
         public void UseBaseClass()
         {
-            // Get the code namespace for the schema.
-            GetInputFilePath("Actor.xsd", Resources.Actor);
-            string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
+            lock (testLock)
+            {
 
-            string outputFilePath = Path.ChangeExtension(inputFilePath, ".baseClass.cs");
-            var generatorParams = new GeneratorParams
-                                      {
-                                          InputFilePath = inputFilePath,
-                                          TargetFramework = TargetFramework.Net30,
-                                          EnableSummaryComment = true,
-                                          GenerateDataContracts = true,
-                                          AutomaticProperties = false,
-                                          EnableDataBinding = true,
-                                          UseGenericBaseClass = true,
-                                          BaseClassName = "EntityObject",
-                                          OutputFilePath = outputFilePath
-                                      };
+                // Get the code namespace for the schema.
+                GetInputFilePath("Actor.xsd", Resources.Actor);
+                string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
-            var xsdGen = new GeneratorFacade(generatorParams);
-            var result = xsdGen.Generate();
+                string outputFilePath = Path.ChangeExtension(inputFilePath, ".baseClass.cs");
+                var generatorParams = new GeneratorParams
+                                          {
+                                              InputFilePath = inputFilePath,
+                                              TargetFramework = TargetFramework.Net30,
+                                              EnableSummaryComment = true,
+                                              GenerateDataContracts = true,
+                                              AutomaticProperties = false,
+                                              EnableDataBinding = true,
+                                              UseGenericBaseClass = true,
+                                              BaseClassName = "EntityObject",
+                                              OutputFilePath = outputFilePath
+                                          };
 
-            if (!result.Success) Assert.Fail(result.Messages.ToString());
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         [TestMethod]
         public void TestAnnotations()
         {
-            // Get the code namespace for the schema.
-            string inputFilePath = GetInputFilePath("TestAnnotations.xsd", Resources.TestAnnotations);
+            lock (testLock)
+            {
 
-            var generatorParams = new GeneratorParams();
-            generatorParams.InputFilePath = inputFilePath;
-            GetGeneratorParams(inputFilePath);
+                // Get the code namespace for the schema.
+                string inputFilePath = GetInputFilePath("TestAnnotations.xsd", Resources.TestAnnotations);
 
-            generatorParams.EnableSummaryComment = true;
-            generatorParams.TargetFramework = TargetFramework.Net35;
-            generatorParams.AutomaticProperties = true;
-            generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".TestAnnotations.cs");
+                var generatorParams = new GeneratorParams {InputFilePath = inputFilePath};
+                GetGeneratorParams(inputFilePath);
 
-            var xsdGen = new GeneratorFacade(generatorParams);
-            var result = xsdGen.Generate();
+                generatorParams.EnableSummaryComment = true;
+                generatorParams.TargetFramework = TargetFramework.Net35;
+                generatorParams.AutomaticProperties = true;
+                generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath,
+                                                                      ".TestAnnotations.cs");
 
-            if (!result.Success) Assert.Fail(result.Messages.ToString());
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         [TestMethod]
         public void WcfAttributes()
         {
-            // Get the code namespace for the schema.
-            GetInputFilePath("Actor.xsd", Resources.Actor);
-            string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
+            lock (testLock)
+            {
 
-            var generatorParams = GetGeneratorParams(inputFilePath);
-            generatorParams.GenerateDataContracts = true;
-            generatorParams.TargetFramework = TargetFramework.Net30;
-            generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".wcf.cs");
+                // Get the code namespace for the schema.
+                GetInputFilePath("Actor.xsd", Resources.Actor);
+                string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
-            var xsdGen = new GeneratorFacade(generatorParams);
-            var result = xsdGen.Generate();
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.GenerateDataContracts = true;
+                generatorParams.TargetFramework = TargetFramework.Net30;
+                generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".wcf.cs");
 
-            if (!result.Success) Assert.Fail(result.Messages.ToString());
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
         }
 
         //[TestMethod]
@@ -446,12 +582,18 @@ namespace Xsd2Code.TestUnit
         //    return dvdCol;
         //}
 
+
         private static string GetInputFilePath(string resourceFileName, string fileContent)
         {
-            using (var sw = new StreamWriter(OutputFolder + resourceFileName, false))
-                sw.Write(fileContent);
+            lock (fileLock)
+            {
+                using (var sw = new StreamWriter(OutputFolder + resourceFileName, false))
+                {
+                    sw.Write(fileContent);
+                }
 
-            return OutputFolder + resourceFileName;
+                return OutputFolder + resourceFileName;
+            }
         }
 
         private static GeneratorParams GetGeneratorParams(string inputFilePath)
@@ -467,8 +609,98 @@ namespace Xsd2Code.TestUnit
                            GenerateDataContracts = true,
                            GenerateCloneMethod = true,
                            IncludeSerializeMethod = true,
-                           HidePrivateFieldInIde = true
+                           HidePrivateFieldInIde = true,
+                           OutputFilePath = GetOutputFilePath(inputFilePath)
                        };
         }
+
+        /// <summary>
+        /// Get output file path
+        /// </summary>
+        /// <param name="inputFilePath">input file path</param>
+        /// <returns></returns>
+        static private string GetOutputFilePath(string inputFilePath)
+        {
+            return Path.ChangeExtension(inputFilePath, ".TestGenerated.cs");
+        }
+
+        /// <summary>
+        /// Compile file
+        /// </summary>
+        /// <param name="filePath">CS file path</param>
+        /// <returns></returns>
+        static private Result<string> CompileCSFile(string filePath)
+        {
+            var result = new Result<string>(null, true);
+            var file = new FileInfo(filePath);
+            if (!file.Exists)
+            {
+                result.Success = false;
+                result.Messages.Add(MessageType.Error, "Input file \"{0}\" does not exist", filePath);
+            }
+            if (result.Success)
+            {
+                try
+                {
+                    var outputPath = Path.ChangeExtension(file.FullName, ".dll");
+                    result.Entity = outputPath;
+
+                    var args = new StringBuilder();
+                    args.Append(" /target:module /nologo /debug");
+                    args.Append(" /out:\"" + outputPath + "\"");
+                    args.Append(" \"" + filePath + "\"");
+
+                    var compilerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                                    @"..\Microsoft.NET\Framework\v2.0.50727\csc.exe");
+
+                    var compilerFile = new FileInfo(compilerPath);
+
+                    Debug.WriteLine(string.Format("Executing:\r\n{0} {1}\r\n", compilerFile.FullName, args));
+
+                    var info = new ProcessStartInfo
+                                   {
+                                       ErrorDialog = false,
+                                       FileName = compilerFile.FullName,
+                                       Arguments = args.ToString(),
+                                       CreateNoWindow = true,
+                                       WindowStyle = ProcessWindowStyle.Minimized
+                                   };
+
+                    using (var process = new Process {StartInfo = info})
+                    {
+                        process.ErrorDataReceived += (s, e) =>
+                                                         {
+                                                             result.Success = false;
+                                                             result.Messages.Add(MessageType.Error, "Error data received", e.Data);
+                                                         };
+
+                        process.Exited += (s, e) => { result.Success = process.ExitCode == 1 && File.Exists(outputPath); };
+
+                        process.OutputDataReceived += (s, e) => result.Messages.Add(MessageType.Debug, "Output data received", e.Data);
+
+                        if (!process.Start())
+                            throw new ApplicationException("Unablle to start process");
+
+                        var exited = process.WaitForExit((int) TimeSpan.FromSeconds(15).TotalMilliseconds);
+                        if (!exited)
+                        {
+                            result.Success = false;
+                            result.Messages.Add(MessageType.Error, "Timeout", "Compile timeout occurred {0}", DateTime.Now - process.StartTime);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Success = false;
+                    result.Messages.Add(MessageType.Error, "Exception", ex.ToString());
+                }
+            }
+
+            if (result.Messages.Count > 0)
+                Debug.WriteLine(result.Messages.ToString());
+
+            return result;
+        }
+
     }
 }

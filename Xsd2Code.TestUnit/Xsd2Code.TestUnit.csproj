@@ -75,28 +75,28 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="xsd\ArrayOfArray.xsd">
+    <None Include="App.config" />
+    <Content Include="xsd\ArrayOfArray.xsd">
       <Generator>xsd2CodeCustomTools</Generator>
-    </None>
-    <None Include="xsd\ChoiceSequence.xsd">
+    </Content>
+    <Content Include="xsd\ChoiceSequence.xsd">
       <LastGenOutput>ChoiceSequence1.Designer.cs</LastGenOutput>
-    </None>
-    <None Include="xsd\CircularClassReference.xsd" />
-    <None Include="xsd\dvd.xsd">
+    </Content>
+    <Content Include="xsd\CircularClassReference.xsd" />
+    <Content Include="xsd\dvd.xsd">
       <SubType>
       </SubType>
-    </None>
-    <None Include="xsd\Actor.xsd">
-    </None>
-    <None Include="xsd\Circular.xsd" />
+    </Content>
+    <Content Include="xsd\Actor.xsd" />
+    <Content Include="xsd\Circular.xsd" />
     <None Include="xsd\dvd.xsx">
       <DependentUpon>dvd.xsd</DependentUpon>
     </None>
-    <None Include="xsd\Gender.xsd" />
-    <None Include="xsd\Hierarchical.xsd" />
-    <None Include="xsd\ReproSchema.xsd" />
-    <None Include="xsd\StackOverFlow.xsd" />
-    <EmbeddedResource Include="xsd\TestAnnotations.xsd" />
+    <Content Include="xsd\Gender.xsd" />
+    <Content Include="xsd\Hierarchical.xsd" />
+    <Content Include="xsd\ReproSchema.xsd" />
+    <Content Include="xsd\StackOverFlow.xsd" />
+    <Content Include="xsd\TestAnnotations.xsd" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Xsd2Code.Library\Xsd2Code.Library.csproj">
