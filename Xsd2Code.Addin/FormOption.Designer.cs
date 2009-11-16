@@ -43,7 +43,7 @@
             this.panel1.Controls.Add(this.btnCancel);
             this.panel1.Controls.Add(this.btnGenerate);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 531);
+            this.panel1.Location = new System.Drawing.Point(0, 570);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(438, 32);
             this.panel1.TabIndex = 2;
@@ -83,13 +83,13 @@
             // 
             this.propertyGrid.Location = new System.Drawing.Point(12, 12);
             this.propertyGrid.Name = "propertyGrid";
-            this.propertyGrid.Size = new System.Drawing.Size(414, 501);
+            this.propertyGrid.Size = new System.Drawing.Size(414, 535);
             this.propertyGrid.TabIndex = 19;
             // 
             // linkToCodePlex
             // 
             this.linkToCodePlex.AutoSize = true;
-            this.linkToCodePlex.Location = new System.Drawing.Point(12, 515);
+            this.linkToCodePlex.Location = new System.Drawing.Point(12, 550);
             this.linkToCodePlex.Name = "linkToCodePlex";
             this.linkToCodePlex.Size = new System.Drawing.Size(185, 13);
             this.linkToCodePlex.TabIndex = 20;
@@ -102,7 +102,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(438, 563);
+            this.ClientSize = new System.Drawing.Size(438, 602);
             this.Controls.Add(this.linkToCodePlex);
             this.Controls.Add(this.propertyGrid);
             this.Controls.Add(this.panel1);

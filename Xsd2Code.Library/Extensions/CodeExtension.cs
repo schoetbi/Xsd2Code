@@ -1224,9 +1224,15 @@ namespace Xsd2Code.Library.Extensions
                      (((declaration != null) && declaration.IsClass)
                       && ((declaration.TypeAttributes & TypeAttributes.Abstract) != TypeAttributes.Abstract)))
                 {
-                    lasyLoadingFields.Add(field.Name);
-                    //ctor.Statements.Insert(0, this.CreateInstanceCodeStatments(field.Name, field.Type));
-                    //addedToConstructor = true;
+                    if (GeneratorContext.GeneratorParams.EnableLasyLoading)
+                    {
+                        lasyLoadingFields.Add(field.Name);
+                    }
+                    else
+                    {
+                        ctor.Statements.Insert(0, this.CreateInstance(field.Name, field.Type));
+                        addedToConstructor = true;
+                    }
                 }
             }
         }
@@ -1248,7 +1254,7 @@ namespace Xsd2Code.Library.Extensions
         /// <param name="name">Name of object</param>
         /// <param name="type">CodeTypeReference Type</param>
         /// <returns>return instance CodeConditionStatement</returns>
-        protected virtual CodeConditionStatement CreateInstanceCodeStatments(string name, CodeTypeReference type)
+        protected virtual CodeConditionStatement CreateInstanceIfNotNull(string name, CodeTypeReference type)
         {
             var statement =
                 new CodeAssignStatement(
@@ -1261,6 +1267,19 @@ namespace Xsd2Code.Library.Extensions
                         CodeBinaryOperatorType.IdentityEquality,
                         new CodePrimitiveExpression(null)),
                         new CodeStatement[] { statement });
+        }
+
+        /// <summary>
+        /// Create new instance of object
+        /// </summary>
+        /// <param name="name">Name of object</param>
+        /// <param name="type">CodeTypeReference Type</param>
+        /// <returns>return instance CodeConditionStatement</returns>
+        protected virtual CodeAssignStatement CreateInstance(string name, CodeTypeReference type)
+        {
+            return new CodeAssignStatement(
+                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
+                                        new CodeObjectCreateExpression(type, new CodeExpression[0]));
         }
 
         /// <summary>
@@ -1355,7 +1374,7 @@ namespace Xsd2Code.Library.Extensions
                 {
                     if (lasyLoadingFields.IndexOf(field.FieldName) != -1)
                     {
-                        prop.GetStatements.Insert(0, this.CreateInstanceCodeStatments(field.FieldName, prop.Type));
+                        prop.GetStatements.Insert(0, this.CreateInstanceIfNotNull(field.FieldName, prop.Type));
                     }
                 }
             }

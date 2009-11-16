@@ -59,7 +59,7 @@ namespace Xsd2Code.Library
             this.DeserializeMethodName = "Deserialize";
             this.SerializeMethodName = "Serialize";
             this.BaseClassName = "EntityBase";
-            this.UseGenericBaseClass = true;
+            this.UseGenericBaseClass = false;
         }
 
         /// <summary>
@@ -149,6 +149,14 @@ namespace Xsd2Code.Library
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if implement INotifyPropertyChanged
+        /// </summary>
+        [Category("Behavior")]
+        [DefaultValue(false)]
+        [Description("Use lasy pattern when possible.")]
+        public bool EnableLasyLoading { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether serialize/deserialize method support
@@ -263,7 +271,7 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Gets or sets a value indicating the name of Serialize method.
         /// </summary>
-        [Category("Serialize"), DefaultValue(false), Description("Use generic patial base class for all methods")]
+        [Category("Behavior"), DefaultValue(false), Description("Use generic patial base class for all methods")]
         public bool UseGenericBaseClass { get; set; }
 
         /// <summary>
@@ -356,6 +364,8 @@ namespace Xsd2Code.Library
                                                                                            GeneratorContext.CODETYPETAG));
                     parameters.EnableDataBinding =
                             Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEDATABINDINGTAG));
+                    parameters.EnableLasyLoading =
+                             Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELASYLOADINGTAG));
                     parameters.HidePrivateFieldInIde =
                             Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.HIDEPRIVATEFIELDTAG));
                     parameters.EnableSummaryComment =
@@ -391,7 +401,7 @@ namespace Xsd2Code.Library
 
                     str = optionLine.ExtractStrFromXML(GeneratorContext.BASECLASSNAMETAG);
                     parameters.BaseClassName = str.Length > 0 ? str : "EntityBase";
-                    
+
                     // TODO:get custom using
                     string customUsingString = optionLine.ExtractStrFromXML(GeneratorContext.CUSTOMUSINGSTAG);
                     if (!string.IsNullOrEmpty(customUsingString))
@@ -440,6 +450,10 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(
                                                           GeneratorContext.ENABLEDATABINDINGTAG,
                                                           this.EnableDataBinding.ToString()));
+
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(
+                                                          GeneratorContext.ENABLELASYLOADINGTAG,
+                                                          this.EnableLasyLoading.ToString()));
 
             optionsLine.Append(XmlHelper.InsertXMLFromStr(
                                                           GeneratorContext.HIDEPRIVATEFIELDTAG,

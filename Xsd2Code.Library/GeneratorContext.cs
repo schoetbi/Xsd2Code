@@ -67,6 +67,12 @@
         /// </summary>
         public const string ENABLEDATABINDINGTAG = "EnableDataBinding";
 
+
+        /// <summary>
+        /// Enable lasy pattern
+        /// </summary>
+        public const string ENABLELASYLOADINGTAG = "EnableLasyLoading";
+
         /// <summary>
         /// Generate summary documentation
         /// </summary>
