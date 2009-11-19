@@ -29,7 +29,6 @@ namespace Xsd2Code.Library.Helpers
             string[] lines = comment.Split(new[] { '\n' });
             foreach (string line in lines)
                 codeStatmentColl.Add(new CodeCommentStatement(line.Trim(), true));
-
             codeStatmentColl.Add(new CodeCommentStatement("</summary>", true));
         }
 
@@ -229,7 +228,13 @@ namespace Xsd2Code.Library.Helpers
         {
             var statments = new CodeStatementCollection();
             statments.Add(GetInvokeMethod(objectName, "Dispose"));
-            return new CodeConditionStatement(new CodeSnippetExpression(string.Format("{0} != null", objectName)), statments.ToArray());
+            return
+                new CodeConditionStatement(
+                    new CodeBinaryOperatorExpression(
+                        new CodeVariableReferenceExpression(objectName),
+                        CodeBinaryOperatorType.IdentityInequality,
+                        new CodePrimitiveExpression(null)),
+                        statments.ToArray());
         }
 
         /// <summary>

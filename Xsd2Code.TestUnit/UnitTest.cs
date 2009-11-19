@@ -127,6 +127,9 @@ namespace Xsd2Code.TestUnit
             }
         }
 
+        /// <summary>
+        /// Arrays the of array.
+        /// </summary>
         [TestMethod]
         public void ArrayOfArray()
         {
@@ -235,12 +238,12 @@ namespace Xsd2Code.TestUnit
                 var generatorParams = GetGeneratorParams(inputFilePath);
                 generatorParams.CollectionObjectType = CollectionType.List;
                 generatorParams.TargetFramework = TargetFramework.Net35;
-                generatorParams.EnableDataBinding = false;
+                generatorParams.EnableDataBinding = true;
                 generatorParams.EnableSummaryComment = true;
                 generatorParams.GenerateDataContracts = false;
-                generatorParams.UseGenericBaseClass = true;
+                generatorParams.UseGenericBaseClass = false;
                 generatorParams.GenerateXMLAttributes = true;
-                generatorParams.AutomaticProperties = true;
+                
 
                 var xsdGen = new GeneratorFacade(generatorParams);
                 var result = xsdGen.Generate();
@@ -313,6 +316,35 @@ namespace Xsd2Code.TestUnit
             }
         }
 
+        [TestMethod]
+        public void GenarateVBCS()
+        {
+            lock (testLock)
+            {
+                // Get the code namespace for the schema.
+                string inputFilePath = GetInputFilePath("Actor.xsd", Resources.Actor);
+
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.TargetFramework = TargetFramework.Net30;
+                generatorParams.AutomaticProperties = true;
+                generatorParams.GenerateDataContracts = true;
+                generatorParams.GenerateXMLAttributes = true;
+                generatorParams.OutputFilePath = GetOutputFilePath(inputFilePath);
+                generatorParams.EnableDataBinding = true;
+                generatorParams.EnableSummaryComment = true;
+                generatorParams.Language = GenerationLanguage.VisualBasic;
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                generatorParams.Language = GenerationLanguage.CSharp;
+                xsdGen = new GeneratorFacade(generatorParams);
+                result = xsdGen.Generate();
+
+                var canCompile = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(canCompile.Success, canCompile.Messages.ToString());
+            }
+        }
         /// <summary>
         /// Alows the debug.
         /// </summary>

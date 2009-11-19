@@ -166,6 +166,11 @@ namespace Xsd2Code.Library.Extensions
                 ctr.TypeArguments.Add(new CodeTypeReference(type.Name));
                 type.BaseTypes.Add(ctr);
             }
+            else
+            {
+                if (GeneratorContext.GeneratorParams.EnableDataBinding)
+                    type.BaseTypes.Add(typeof(INotifyPropertyChanged));
+            }
 
             // Generate WCF DataContract
             this.CreateDataContractAttribute(type, schema);
@@ -232,7 +237,7 @@ namespace Xsd2Code.Library.Extensions
                         Type =
                             new CodeTypeReference(typeof(PropertyChangedEventHandler))
                     };
-
+            propertyChangedEvent.ImplementationTypes.Add(new CodeTypeReference("INotifyPropertyChanged"));
             type.Members.Add(propertyChangedEvent);
 
             // -----------------------------------------------------------
@@ -401,7 +406,7 @@ namespace Xsd2Code.Library.Extensions
                         new CodePrimitiveExpression(null)));
 
             tryStatmanentsCol.Add(new CodeAssignStatement(
-                new CodeSnippetExpression("memoryStream"),
+                new CodeVariableReferenceExpression("memoryStream"),
                 CodeDomHelper.CreateInstance(typeof(MemoryStream))));
 
             // --------------------------------------------------------------------------
@@ -931,6 +936,8 @@ namespace Xsd2Code.Library.Extensions
         {
             string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
 
+            CodeTypeReference teeType = new CodeTypeReference(typeName);
+            
             var saveToFileMethodList = new List<CodeMemberMethod>();
             var loadFromFileMethod = new CodeMemberMethod
                                          {
@@ -953,10 +960,10 @@ namespace Xsd2Code.Library.Extensions
             // obj = null;
             // -----------------
             loadFromFileMethod.Statements.Add(
-                new CodeAssignStatement(new CodeSnippetExpression("exception"), new CodePrimitiveExpression(null)));
+                new CodeAssignStatement(new CodeArgumentReferenceExpression("exception"), new CodePrimitiveExpression(null)));
 
             loadFromFileMethod.Statements.Add(
-                new CodeAssignStatement(new CodeSnippetExpression("obj"), new CodeSnippetExpression(string.Format("default({0})", typeName))));
+                new CodeAssignStatement(new CodeArgumentReferenceExpression("obj"), new CodeDefaultValueExpression(teeType)));
 
             var tryStatmanentsCol = new CodeStatementCollection();
 
@@ -964,11 +971,11 @@ namespace Xsd2Code.Library.Extensions
             var loadFromFileInvoke =
                 new CodeMethodInvokeExpression(
                       new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.LoadFromFileMethodName),
-                        new CodeExpression[] { new CodeSnippetExpression("fileName") });
+                        new CodeExpression[] { new CodeArgumentReferenceExpression("fileName") });
 
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("obj"),
+                    new CodeArgumentReferenceExpression("obj"),
                         loadFromFileInvoke));
 
             tryStatmanentsCol.Add(CodeDomHelper.GetReturnTrue());
@@ -1256,10 +1263,21 @@ namespace Xsd2Code.Library.Extensions
         /// <returns>return instance CodeConditionStatement</returns>
         protected virtual CodeConditionStatement CreateInstanceIfNotNull(string name, CodeTypeReference type)
         {
-            var statement =
+
+            CodeAssignStatement statement;
+            if(type.BaseType.Equals("System.String")) {
+                statement =
+                new CodeAssignStatement(
+                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
+                                        new CodeSnippetExpression("String.Empty"));
+            }
+            else{
+            statement =
                 new CodeAssignStatement(
                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
                                         new CodeObjectCreateExpression(type, new CodeExpression[0]));
+            }
+
             return
                 new CodeConditionStatement(
                     new CodeBinaryOperatorExpression(
@@ -1606,10 +1624,14 @@ namespace Xsd2Code.Library.Extensions
         {
             string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : classType.Name;
 
+
+            //VB is not Case Sensitive
+            string fieldName = GeneratorContext.GeneratorParams.Language == GenerationLanguage.VisualBasic ?  "sSerializer" : "serializer" ;
+
             // -----------------------------------------------------------------
             // private static System.Xml.Serialization.XmlSerializer serializer;
             // -----------------------------------------------------------------
-            var serializerfield = new CodeMemberField(typeof(XmlSerializer), "serializer");
+            var serializerfield = new CodeMemberField(typeof(XmlSerializer), fieldName);
             serializerfield.Attributes = MemberAttributes.Static | MemberAttributes.Private;
             classType.Members.Add(serializerfield);
 
@@ -1629,16 +1651,22 @@ namespace Xsd2Code.Library.Extensions
 
             statments.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("serializer"),
+                    new CodeSnippetExpression(fieldName),
                     new CodeObjectCreateExpression(
                         new CodeTypeReference(typeof(XmlSerializer)), new CodeExpression[] { typeofValue })));
 
-            serializerProperty.GetStatements.Add(
-                new CodeConditionStatement(
-                    new CodeSnippetExpression(string.Format("{0} == null", "serializer")), statments.ToArray()));
 
             serializerProperty.GetStatements.Add(
-                new CodeMethodReturnStatement(new CodeSnippetExpression("serializer")));
+                new CodeConditionStatement(
+                    new CodeBinaryOperatorExpression(
+                        new CodeSnippetExpression(fieldName),
+                        CodeBinaryOperatorType.IdentityEquality,
+                        new CodePrimitiveExpression(null)),
+                        statments.ToArray()));
+
+
+            serializerProperty.GetStatements.Add(
+                new CodeMethodReturnStatement(new CodeSnippetExpression(fieldName)));
 
             classType.Members.Add(serializerProperty);
         }
