@@ -14,6 +14,7 @@
 //  Updated 2009-06-16 Add EntityBase class.
 //                     Add new serialize/deserialize methods.
 //                     Dispose object in serialize/deserialize methods.
+//  Updated 2010-01-07 Deerwood McCord Jr. (DCM) applied patch from Rob van der Veer
 // </remarks>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -88,6 +89,20 @@ namespace Xsd2Code.Library.Extensions
 
             foreach (var type in types)
             {
+                
+                //Fixes http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8781
+                //  and http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6944
+                if (GeneratorContext.GeneratorParams.ExcludeIncludedTypes)
+                {
+                    //if the typeName is NOT defined in the current schema, skip it.
+                    if (!ContainsTypeName(schema, type))
+                    {
+                        code.Types.Remove(type);
+                        continue;
+                    }
+                }
+
+
                 // Remove default remarks attribute
                 type.Comments.Clear();
 
@@ -104,6 +119,62 @@ namespace Xsd2Code.Library.Extensions
 
             foreach (string collName in CollectionTypes.Keys)
                 this.CreateCollectionClass(code, collName);
+        }
+
+        /// <summary>
+        /// Determines whether the specified schema contains the type.
+        /// </summary>
+        /// <param name="schema">The schema.</param>
+        /// <param name="type">The type.</param>
+        /// <returns>
+        /// 	<c>true</c> if the specified schema contains the type; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>Used to Exclude Included Types from Schema</remarks>
+        private bool ContainsTypeName(XmlSchema schema, CodeTypeDeclaration type)
+        {
+            foreach (var item in schema.Items)
+            {
+                var complexItem = item as XmlSchemaComplexType;
+                if(complexItem != null)
+                {
+                    if (complexItem.Name == type.Name)
+                    {
+                        return true;
+                    }
+                }
+                var elementItem = item as XmlSchemaElement;
+                if (elementItem != null)
+                {
+                    if (elementItem.Name == type.Name)
+                    {
+                        return true;
+                    }
+                }
+
+            }
+
+            //TODO: Does not work for combined anonymous types 
+            //fallback: Check if the namespace attribute of the type equals the namespace of the file.
+            //first, find the XmlType attribute.
+            foreach(CodeAttributeDeclaration attribute in type.CustomAttributes)
+            {
+                if(attribute.Name == "System.Xml.Serialization.XmlTypeAttribute")
+                {
+                    foreach(CodeAttributeArgument argument in attribute.Arguments)
+                    {
+                        if(argument.Name == "Namespace")
+                        {
+                            if(((CodePrimitiveExpression)argument.Value).Value == schema.TargetNamespace)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                 
+            }
+
+            return false;
         }
         #endregion
 
@@ -322,10 +393,17 @@ namespace Xsd2Code.Library.Extensions
         protected virtual void CreateCollectionClass(CodeNamespace codeNamespace, string collName)
         {
             var ctd = new CodeTypeDeclaration(collName) { IsClass = true };
+
+            /* DCM REMOVED NOT LANGUAGE INDEPENDENT
             ctd.BaseTypes.Add(string.Format(
                                             "{0}<{1}>",
                                             GeneratorContext.GeneratorParams.CollectionBase,
                                             CollectionTypes[collName]));
+            DCM REMOVED */
+
+            //DCM Changed to Languaged independent CodeDOM
+            ctd.BaseTypes.Add(new CodeTypeReference(GeneratorContext.GeneratorParams.CollectionBase, new[] { new CodeTypeReference(CollectionTypes[collName]) }));
+
             ctd.IsPartial = true;
 
             bool newCTor = false;
@@ -1224,7 +1302,7 @@ namespace Xsd2Code.Library.Extensions
             //    this.nameField = new List<Name>();
             // }
             // ---------------------------------------
-            if (GeneratorContext.GeneratorParams.CollectionObjectType != CollectionType.Array)
+            if (GeneratorContext.GeneratorParams.EnableInitializeFields && GeneratorContext.GeneratorParams.CollectionObjectType != CollectionType.Array)
             {
                 CodeTypeDeclaration declaration = this.FindTypeInNamespace(field.Type.BaseType, ns);
                 if (thisIsCollectionType ||
@@ -1245,13 +1323,13 @@ namespace Xsd2Code.Library.Extensions
         }
 
         /// <summary>
-        /// Add INotifyPropertyChanged implementation
+        /// Create a Class Constructor
         /// </summary>
         /// <param name="type">type of declaration</param>
         /// <returns>return CodeConstructor</returns>
-        protected virtual CodeConstructor ProcessClass(CodeTypeDeclaration type)
+        protected virtual CodeConstructor CreateClassConstructor(CodeTypeDeclaration type)
         {
-            var ctor = new CodeConstructor { Attributes = MemberAttributes.Public };
+            var ctor = new CodeConstructor { Attributes = MemberAttributes.Public, Name = type.Name };
             return ctor;
         }
 
@@ -1265,7 +1343,8 @@ namespace Xsd2Code.Library.Extensions
         {
 
             CodeAssignStatement statement;
-            if(type.BaseType.Equals("System.String")) {
+            if (type.BaseType.Equals("System.String") && type.ArrayRank == 0)
+            {
                 statement =
                 new CodeAssignStatement(
                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
@@ -1384,15 +1463,18 @@ namespace Xsd2Code.Library.Extensions
             }
 
             // Lasy loading
-            var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
-            if (propReturnStatment != null)
+            if (GeneratorContext.GeneratorParams.EnableInitializeFields)
             {
-                var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
-                if (field != null)
+                var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
+                if (propReturnStatment != null)
                 {
-                    if (lasyLoadingFields.IndexOf(field.FieldName) != -1)
+                    var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
+                    if (field != null)
                     {
-                        prop.GetStatements.Insert(0, this.CreateInstanceIfNotNull(field.FieldName, prop.Type));
+                        if (lasyLoadingFields.IndexOf(field.FieldName) != -1)
+                        {
+                            prop.GetStatements.Insert(0, this.CreateInstanceIfNotNull(field.FieldName, prop.Type));
+                        }
                     }
                 }
             }
@@ -1561,6 +1643,10 @@ namespace Xsd2Code.Library.Extensions
                     collectionType = new CodeTypeReference("List", new[] { new CodeTypeReference(codeType.BaseType) });
                     break;
 
+                case CollectionType.BindingList:
+                    collectionType = new CodeTypeReference("BindingList", new[] { new CodeTypeReference(codeType.BaseType) });
+                    break;
+
                 case CollectionType.ObservableCollection:
                     collectionType = new CodeTypeReference("ObservableCollection", new[] { new CodeTypeReference(codeType.BaseType) });
                     break;
@@ -1605,7 +1691,7 @@ namespace Xsd2Code.Library.Extensions
             if (ctor == null)
             {
                 newCTor = true;
-                ctor = this.ProcessClass(type);
+                ctor = this.CreateClassConstructor(type);
             }
 
             if (GeneratorContext.GeneratorParams.EnableSummaryComment)

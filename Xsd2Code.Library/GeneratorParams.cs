@@ -60,6 +60,8 @@ namespace Xsd2Code.Library
             this.SerializeMethodName = "Serialize";
             this.BaseClassName = "EntityBase";
             this.UseGenericBaseClass = false;
+            this.EnableInitializeFields = true;
+            this.ExcludeIncludedTypes = false;
         }
 
         /// <summary>
@@ -235,6 +237,11 @@ namespace Xsd2Code.Library
         [Description("Indicating whether if generate EditorBrowsableState.Never attribute.")]
         public bool HidePrivateFieldInIde { get; set; }
 
+        [Category("Behavior")]
+        [DefaultValue(false)]
+        [Description("Indicating to exclude class generation types includes/imported into schema.")]
+        public bool ExcludeIncludedTypes { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
         /// </summary>
@@ -304,6 +311,14 @@ namespace Xsd2Code.Library
         [Category("Serialize"), DefaultValue("LoadFromFile"), Description("The name of load from xml file method.")]
         public string LoadFromFileMethodName { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether accessing a property will initialize it
+        /// </summary>
+        [Category("Behavior")]
+        [DefaultValue(true)]
+        [Description("Enable/Disable Global initialisation of the fields in both Constructors, Lazy Properties. Maximum override")]
+        public bool EnableInitializeFields { get; set; }
+       
         /// <summary>
         /// Loads from file.
         /// </summary>
@@ -386,6 +401,11 @@ namespace Xsd2Code.Library
                     parameters.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
 
                     parameters.UseGenericBaseClass = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
+
+                    parameters.EnableInitializeFields =
+                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEINITIALIZEFIELDSTAG),true);
+
+                    parameters.ExcludeIncludedTypes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG));
 
                     string str = optionLine.ExtractStrFromXML(GeneratorContext.SERIALIZEMETHODNAMETAG);
                     parameters.SerializeMethodName = str.Length > 0 ? str : "Serialize";
@@ -532,6 +552,13 @@ namespace Xsd2Code.Library
                                                               GeneratorContext.CUSTOMUSINGSTAG,
                                                               customUsingsStr.ToString()));
             }
+
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG,
+                                                          this.ExcludeIncludedTypes.ToString()));
+
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEINITIALIZEFIELDSTAG,
+                                                          this.EnableInitializeFields.ToString()));
+
 
             return optionsLine.ToString();
         }

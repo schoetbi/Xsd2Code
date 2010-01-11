@@ -125,7 +125,13 @@ namespace Xsd2Code
                     case "/customusings":
                         if (i < args.Length - 1)
                         {
-                            generatorParams.CustomUsingsString = args[i + 1];
+                            //generatorParams.CustomUsingsString = args[i + 1];
+
+                            foreach(string item in args[i+1].Split(';'))
+                            {
+                                generatorParams.CustomUsings.Add(new NamespaceParam { NameSpace = item });
+                            }                            
+
                             i++;
                         }
                         break;
@@ -213,6 +219,30 @@ namespace Xsd2Code
                         break;
                     case "/ap-":
                         generatorParams.AutomaticProperties = false;
+                        break;
+
+                    case "/if":
+                    case "/if+":
+                        generatorParams.EnableInitializeFields = true;
+                        break;
+                    case "/if-":
+                        generatorParams.EnableInitializeFields = false;
+                        break;
+
+                    case "/eit":
+                    case "/eit+":
+                        generatorParams.ExcludeIncludedTypes = true;
+                        break;
+                    case "/eit-":
+                        generatorParams.ExcludeIncludedTypes = false;
+                        break;
+
+                    case "/gbc":
+                    case "/gbc+":
+                        generatorParams.UseGenericBaseClass = true;
+                        break;
+                    case "/gbc-":
+                        generatorParams.UseGenericBaseClass = false;
                         break;
 
                     case "/sc":

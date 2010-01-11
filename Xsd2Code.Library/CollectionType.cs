@@ -26,6 +26,11 @@ namespace Xsd2Code.Library
         List,
 
         /// <summary>
+        /// Provides a generic collection that supports data binding. Especially in WinForms
+        /// </summary>
+        BindingList,
+
+        /// <summary>
         /// Generic list for notifications when items get added, removed, or when the whole list is refreshed
         /// </summary>
         ObservableCollection,

@@ -7,6 +7,7 @@ using System.Xml.Serialization;
 using Xsd2Code.Library.Extensions;
 using Xsd2Code.Library.Helpers;
 using System.Xml;
+using System.Linq;
 
 namespace Xsd2Code.Library
 {
@@ -119,6 +120,13 @@ namespace Xsd2Code.Library
                 foreach (XmlSchemaElement element in xsd.Elements.Values)
                 {
                     var mapping = importer.ImportTypeMapping(element.QualifiedName);
+                    exporter.ExportTypeMapping(mapping);
+                }
+
+                //Fixes/handles http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6941
+                foreach (XmlSchemaComplexType complex in xsd.Items.OfType<XmlSchemaComplexType>())
+                {
+                    var mapping = importer.ImportSchemaType(complex.QualifiedName);
                     exporter.ExportTypeMapping(mapping);
                 }
 

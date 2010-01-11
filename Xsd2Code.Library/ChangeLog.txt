@@ -16,5 +16,22 @@
 				 http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8943
 				 For optional items, an element is incorrectly instantiated in the constructor of the created code.
 				 http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8118
+2010-01-07, DCM: Added patch from Rob van der Veer. Adding Option to exclude "Included" Schema's in Code Generation,
+				 eliminating duplicate class generation: 
+				 ExcludeIncludedTypes CommandLine = /eit
+				 UseGenericBaseClass /gbc switch from the commandline
+				 
+				 Issue #8781 Import directive of many files duplicate types - http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8781
+				 Issue #6944 Add possibility to do not generate types from referenced schemas - http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6944
+				 Issue #6941 Generation from XSD wich contains only types declarations doesn't work - http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6941
+				 
+				 EnableInitializeFields /if switch. Enables/disables all Field Initialization both Constructor or Lazy. Which are workarounds for below.
+				 Issue #9489 Optional fields are instanciated in constructor - http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=9489
+				 Issue #9023 Automatic collection props result in incorrect field order - http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=9023
+				 
+2010-01-07, DCM: Fixed DefinedType and Custom Collection issue that generated C# syntax only.
+2010-01-07, DCM: Added BindingList to List of Collections. Used in primarily in WinForms vs ObservableCollection
+2010-01-10, DCM: Fixed Documentation Comments being improperly formatted when Using CodeDomHelper Classes
+
 				 
 		

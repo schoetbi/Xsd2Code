@@ -213,10 +213,11 @@ namespace Xsd2Code.Library.Helpers
         /// String to boolean static method 
         /// </summary>
         /// <param name="p">string to transform</param>
+        /// <param name="defaultIfNull">if string is null use this default</param>
         /// <returns>booean result</returns>
-        public static bool ToBoolean(string p)
+        public static bool ToBoolean(string p, bool defaultIfNull)
         {
-            if (string.IsNullOrEmpty(p)) return false;
+            if (string.IsNullOrEmpty(p)) return defaultIfNull;
 
             switch (p.Substring(0, 1).ToUpper())
             {
@@ -226,6 +227,16 @@ namespace Xsd2Code.Library.Helpers
                     return true;
             }
             return false;
+        }        
+        
+        /// <summary>
+        /// String to boolean static method 
+        /// </summary>
+        /// <param name="p">string to transform</param>
+        /// <returns>booean result</returns>
+        public static bool ToBoolean(string p)
+        {
+            return ToBoolean(p, false);
         }
 
     }

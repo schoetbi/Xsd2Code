@@ -123,6 +123,16 @@
         /// </summary>
         public const string GENERATEXMLATTRIBUTESTAG = "GenerateXMLAttributes";
 
+        /// <summary>
+        /// Indicating to exclude class generation types includes/imported into schema.
+        /// </summary>
+        public const string EXCLUDEINCLUDEDTYPESTAG = "ExcludeIncludedTypes";
+
+        /// <summary>
+        ///  Enable/Disable Global initialisation of the fields in both Constructors, Lazy Properties. Maximum override
+        /// </summary>
+        public const string ENABLEINITIALIZEFIELDSTAG =  "EnableInitializeFields"; 
+
         #region Fields
 
         /// <summary>

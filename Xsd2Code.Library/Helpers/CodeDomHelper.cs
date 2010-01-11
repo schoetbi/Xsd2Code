@@ -170,7 +170,7 @@ namespace Xsd2Code.Library.Helpers
         /// <returns>return return comment statment</returns>
         internal static CodeCommentStatement GetReturnComment(string text)
         {
-            var comments = new CodeCommentStatement(string.Format("<returns>{0}</returns>", text));
+            var comments = new CodeCommentStatement(string.Format("<returns>{0}</returns>", text),true);
             return comments;
         }
 
@@ -198,7 +198,7 @@ namespace Xsd2Code.Library.Helpers
         /// <returns>CodeCommentStatement param</returns>
         internal static CodeCommentStatement GetParamComment(string paramName, string text)
         {
-            var comments = new CodeCommentStatement(string.Format("<param name=\"{0}\">{1}</param>", paramName, text));
+            var comments = new CodeCommentStatement(string.Format("<param name=\"{0}\">{1}</param>", paramName, text),true);
             return comments;
         }
 
