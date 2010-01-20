@@ -32,6 +32,8 @@
 2010-01-07, DCM: Fixed DefinedType and Custom Collection issue that generated C# syntax only.
 2010-01-07, DCM: Added BindingList to List of Collections. Used in primarily in WinForms vs ObservableCollection
 2010-01-10, DCM: Fixed Documentation Comments being improperly formatted when Using CodeDomHelper Classes
+2010-01-20, DCM: Cleaned up CodeSnippetExpressions Converting to appropriate CodeDom specific Expression. Further removing
+                 language specific Switch statements where possible.
 
 				 
 		

@@ -121,8 +121,11 @@ namespace Xsd2Code.Library.Helpers
         /// <returns></returns>
         public static string GetOutputFilePath(string xsdFilePath, CodeDomProvider provider)
         {
+            /* DCM REMOVED: CodeDom Provider has FileExtension
             var language = GetGenerationLanguage(provider);
             return GetOutputFilePath(xsdFilePath, language);
+             */ 
+            return Path.ChangeExtension(xsdFilePath, ".designer." + provider.FileExtension);
         }
 
         /// <summary>
@@ -133,6 +136,9 @@ namespace Xsd2Code.Library.Helpers
         /// <returns>Generated file output path</returns>
         public static string GetOutputFilePath(string xsdFilePath, GenerationLanguage language)
         {
+            return GetOutputFilePath(xsdFilePath, CodeDomProviderFactory.GetProvider(language));
+
+            /* DCM REMOVED CodeDom Provider has FileExtension
             switch (language)
             {
                 case GenerationLanguage.VisualBasic:
@@ -142,8 +148,18 @@ namespace Xsd2Code.Library.Helpers
                 default:
                     return Path.ChangeExtension(xsdFilePath, ".Designer.cs");
             }
+             */ 
         }
-
+        
+        /// <summary>
+        /// Gets the language extension based on the Passed language.
+        /// </summary>
+        /// <param name="language">The language.</param>
+        /// <returns></returns>
+        public static string GetLanguageExtension(GenerationLanguage language)
+        {
+            return CodeDomProviderFactory.GetProvider(language).FileExtension;
+        }
 
         /// <summary>
         /// Convert string enumeration value name to actual enumeration value

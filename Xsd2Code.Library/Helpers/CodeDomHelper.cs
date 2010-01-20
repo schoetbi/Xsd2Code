@@ -7,6 +7,8 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
+using System.ComponentModel;
+
 namespace Xsd2Code.Library.Helpers
 {
     using System;
@@ -87,9 +89,9 @@ namespace Xsd2Code.Library.Helpers
             var methodInvoke =
                 parameters != null
                     ? new CodeMethodInvokeExpression(
-                          new CodeMethodReferenceExpression(new CodeSnippetExpression(targetObject), methodName), parameters)
+                          new CodeMethodReferenceExpression(new CodeVariableReferenceExpression(targetObject), methodName), parameters)
                     : new CodeMethodInvokeExpression(
-                          new CodeMethodReferenceExpression(new CodeSnippetExpression(targetObject), methodName));
+                          new CodeMethodReferenceExpression(new CodeVariableReferenceExpression(targetObject), methodName));
 
             return methodInvoke;
         }
@@ -100,7 +102,7 @@ namespace Xsd2Code.Library.Helpers
         /// <returns>statment of return code</returns>
         internal static CodeMethodReturnStatement GetReturnTrue()
         {
-            return new CodeMethodReturnStatement(new CodeSnippetExpression("true"));
+            return new CodeMethodReturnStatement(new CodePrimitiveExpression(true));
         }
 
         /// <summary>
@@ -109,7 +111,7 @@ namespace Xsd2Code.Library.Helpers
         /// <returns>statment of return code</returns>
         internal static CodeMethodReturnStatement GetReturnFalse()
         {
-            return new CodeMethodReturnStatement(new CodeSnippetExpression("false"));
+            return new CodeMethodReturnStatement(new CodePrimitiveExpression(false));
         }
 
         /// <summary>
@@ -121,8 +123,8 @@ namespace Xsd2Code.Library.Helpers
             var catchStatmanents = new CodeStatement[2];
 
             catchStatmanents[0] = new CodeAssignStatement(
-                new CodeSnippetExpression("exception"),
-                new CodeSnippetExpression("ex"));
+                new CodeVariableReferenceExpression("exception"),
+                new CodeVariableReferenceExpression("ex"));
 
             catchStatmanents[1] = GetReturnFalse();
             var catchClause = new CodeCatchClause(
@@ -141,7 +143,7 @@ namespace Xsd2Code.Library.Helpers
         internal static CodeCatchClause[] GetThrowClause()
         {
             var catchStatmanents = new CodeStatementCollection();
-            catchStatmanents.Add(new CodeThrowExceptionStatement(new CodeSnippetExpression("ex")));
+            catchStatmanents.Add(new CodeThrowExceptionStatement(new CodeVariableReferenceExpression("ex")));
             var catchClause = new CodeCatchClause(
                                                     "ex",
                                                     new CodeTypeReference(typeof(Exception)),
@@ -273,5 +275,170 @@ namespace Xsd2Code.Library.Helpers
         {
             return new CodeObjectCreateExpression(new CodeTypeReference(type), ctorParams);
         }
+
+        //DCM ADDED: Helpers to remove More CodeSnippetExpressions
+        #region DCM Added 2010-01-20
+
+        /// <summary>
+        /// Get CodeMethodInvokeExpression
+        /// </summary>
+        /// <param name="targetObject">Name of target object. Use this if empty</param>
+        /// <param name="methodName">Name of method to invoke</param>
+        /// <param name="parameters">method params as variable argument array</param>
+        /// <returns>CodeMethodInvokeExpression value</returns>
+        /// <remarks>DCM ADDED for varArgs</remarks>
+        internal static CodeMethodInvokeExpression GetInvokeMethodEx(string targetObject, string methodName, params CodeExpression[] parameters)
+        {
+            var methodInvoke =
+                parameters != null
+                    ? new CodeMethodInvokeExpression(
+                          new CodeMethodReferenceExpression(new CodeVariableReferenceExpression(targetObject), methodName), parameters)
+                    : new CodeMethodInvokeExpression(
+                          new CodeMethodReferenceExpression(new CodeVariableReferenceExpression(targetObject), methodName));
+
+            return methodInvoke;
+        }
+
+        /// <summary>
+        /// Gets the Enum CodeFieldReferenceExpression.
+        /// </summary>
+        /// <param name="enumType">Type of the enum.</param>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <returns></returns>
+        internal static CodeFieldReferenceExpression GetEnum(Type enumType, String fieldName)
+        {
+            return new CodeFieldReferenceExpression(
+                 new CodeTypeReferenceExpression(enumType), fieldName);
+        }
+
+        /// <summary>
+        /// Gets the enum as CodeFieldReferenceExpression.
+        /// </summary>
+        /// <param name="enumType">Type of the enum as string.</param>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <returns></returns>
+        internal static CodeFieldReferenceExpression GetEnum(String enumType, String fieldName)
+        {
+            return new CodeFieldReferenceExpression(
+                 new CodeTypeReferenceExpression(enumType), fieldName);
+        }        
+        
+        /// <summary>
+        /// Gets the Static Field CodeFieldReferenceExpression.
+        /// </summary>
+        /// <param name="classType">Type of the Class.</param>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <returns></returns>
+        internal static CodeFieldReferenceExpression GetStaticField(Type classType, String fieldName)
+        {
+            return new CodeFieldReferenceExpression(
+                 new CodeTypeReferenceExpression(classType), fieldName);
+        }
+
+        /// <summary>
+        /// Gets the Static Field as CodeFieldReferenceExpression.
+        /// </summary>
+        /// <param name="classType">Type of the Class as string.</param>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <returns></returns>
+        internal static CodeFieldReferenceExpression GetStaticField(String classType, String fieldName)
+        {
+            return new CodeFieldReferenceExpression(
+                 new CodeTypeReferenceExpression(classType), fieldName);
+        }
+
+        /// <summary>
+        /// Gets the object's named property.
+        /// </summary>
+        /// <param name="targetObject">The target object.</param>
+        /// <param name="propertyName">Name of the property.</param>
+        /// <returns></returns>
+        internal static CodePropertyReferenceExpression GetObjectProperty(string targetObject, string propertyName)
+        {
+            return new CodePropertyReferenceExpression(new CodeVariableReferenceExpression(targetObject),propertyName);
+        }
+
+        /// <summary>
+        /// Searches the CodeTypeDeclaration and Gets the name member method.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="name">The name.</param>
+        /// <returns></returns>
+        internal static CodeMemberMethod GetMemberMethod(CodeTypeDeclaration type, string name )
+        {
+            CodeMemberMethod result = null;
+            
+            foreach (CodeTypeMember member in type.Members)
+            {
+                if (member is CodeMemberMethod && member.Name.Equals(name))
+                    result = member as CodeMemberMethod;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Creates the property changed method.
+        /// </summary>
+        /// <returns>CodeMemberMethod on Property Change handler</returns>
+        /// <remarks>
+        /// <code>
+        ///  protected virtual  void OnPropertyChanged(string info) {
+        ///      PropertyChangedEventHandler handler = PropertyChanged;
+        ///      if (handler != null) {
+        ///          handler(this, new PropertyChangedEventArgs(info));
+        ///      }
+        ///  }
+        /// </code>
+        /// </remarks>
+        internal static CodeMemberMethod CreatePropertyChangedMethod()
+        {
+            const string paramName = "info";
+            const string variableName = "handler";
+
+            var propertyChangedMethod = new CodeMemberMethod
+            {
+                Name = "OnPropertyChanged",
+                Attributes = MemberAttributes.Public
+            };
+            propertyChangedMethod.Parameters.Add(new CodeParameterDeclarationExpression(
+                new CodeTypeReference(typeof(String)), paramName));
+
+            //Declare temp variable holding the event
+            var vardec = new CodeVariableDeclarationStatement(
+                new CodeTypeReference(typeof(PropertyChangedEventHandler)), variableName);
+
+            vardec.InitExpression = new CodeEventReferenceExpression(
+                new CodeThisReferenceExpression(), "PropertyChanged");
+
+            propertyChangedMethod.Statements.Add(vardec);
+
+            //The part of the true, create the event and invoke it
+
+            //var createArgs = new CodeObjectCreateExpression(
+            //    new CodeTypeReference(typeof(PropertyChangedEventArgs)),
+            //    new CodeArgumentReferenceExpression(paramName));
+
+            var createArgs = CodeDomHelper.CreateInstance(typeof(PropertyChangedEventArgs), paramName);
+
+            var raiseEvent = new CodeDelegateInvokeExpression(
+                new CodeVariableReferenceExpression(variableName),
+                new CodeThisReferenceExpression(), createArgs);
+
+            //The Condition
+            CodeExpression condition = new CodeBinaryOperatorExpression(
+                new CodeVariableReferenceExpression(variableName),
+                    CodeBinaryOperatorType.IdentityInequality,
+                new CodePrimitiveExpression(null));
+
+            //The if condition
+            var ifTempIsNull = new CodeConditionStatement();
+            ifTempIsNull.Condition = condition;
+            ifTempIsNull.TrueStatements.Add(raiseEvent);
+
+            propertyChangedMethod.Statements.Add(ifTempIsNull);
+            return propertyChangedMethod;
+        }
+
+        #endregion
     }
 }

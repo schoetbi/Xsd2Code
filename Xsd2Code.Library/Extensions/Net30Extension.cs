@@ -5,6 +5,9 @@
 // <summary>
 //   Implements code generation extension for .Net Framework 3.0
 // </summary>
+// <remarks>
+//  Updated 2010-01-20 Deerwood McCord Jr. Cleaned CodeSnippetStatements by replacing with specific CodeDom Expressions
+// </remarks>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Xsd2Code.Library.Extensions
@@ -97,13 +100,15 @@ namespace Xsd2Code.Library.Extensions
                 var attributeType = new CodeTypeReference("System.Runtime.Serialization.DataContractAttribute");
                 var codeAttributeArgument = new List<CodeAttributeArgument>();
 
-                var typeName = string.Concat('"', type.Name, '"');
-                codeAttributeArgument.Add(new CodeAttributeArgument("Name", new CodeSnippetExpression(typeName)));
+                //var typeName = string.Concat('"', type.Name, '"');
+                //codeAttributeArgument.Add(new CodeAttributeArgument("Name", new CodeSnippetExpression(typeName)));
+                codeAttributeArgument.Add(new CodeAttributeArgument("Name", new CodePrimitiveExpression(type.Name)));
 
                 if (!string.IsNullOrEmpty(schema.TargetNamespace))
                 {
-                    var targetNamespace = string.Concat('\"', schema.TargetNamespace, '\"');
-                    codeAttributeArgument.Add(new CodeAttributeArgument("Namespace", new CodeSnippetExpression(targetNamespace)));
+                    //var targetNamespace = string.Concat('\"', schema.TargetNamespace, '\"');
+                    //codeAttributeArgument.Add(new CodeAttributeArgument("Namespace", new CodeSnippetExpression(targetNamespace)));
+                    codeAttributeArgument.Add(new CodeAttributeArgument("Namespace", new CodePrimitiveExpression(schema.TargetNamespace)));
                 }
 
                 type.CustomAttributes.Add(new CodeAttributeDeclaration(attributeType, codeAttributeArgument.ToArray()));

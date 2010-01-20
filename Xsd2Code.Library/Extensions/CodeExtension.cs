@@ -15,6 +15,8 @@
 //                     Add new serialize/deserialize methods.
 //                     Dispose object in serialize/deserialize methods.
 //  Updated 2010-01-07 Deerwood McCord Jr. (DCM) applied patch from Rob van der Veer
+//  Updated 2010-01-20 Deerwood McCord Jr. Cleaned CodeSnippetStatements by replacing with specific CodeDom Expressions
+//                     Refactored OnPropertyChanged to use more CodeDom Specific version found in CodeDomHelper.CreateOnPropertyChangeMethod()
 // </remarks>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -325,11 +327,48 @@ namespace Xsd2Code.Library.Extensions
             //      }
             //  }
             // -----------------------------------------------------------
+
+            /* DCM REMOVED Uses CodeSnippetExpressions
+            var propertyChangedMethod = CreatePropertyChangedMethod();
+             */
+ 
+            var propertyChangedMethod = CodeDomHelper.CreatePropertyChangedMethod();
+            
+            type.Members.Add(propertyChangedMethod);
+        }
+
+
+        /// <summary>
+        /// Creates the property changed method.
+        /// </summary>
+        /// <returns>CodeMemberMethod on Property Change handler</returns>
+        /// <remarks>
+        /// DCM: Plan on deleting after Beta Period.
+        /// Use Switch and Language specific CodeSnippetExpressions produce method
+        /// VB version
+        /// <code>
+        /// public sub OnPropertyChanged(byval info as string)
+        ///     RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(info))
+        /// end sub
+        /// 
+        /// </code>
+        /// C# & CPP Version
+        /// <code>
+        ///  protected virtual  void OnPropertyChanged(string info) {
+        ///      PropertyChangedEventHandler handler = PropertyChanged;
+        ///      if (handler != null) {
+        ///          handler(this, new PropertyChangedEventArgs(info));
+        ///      }
+        ///  }
+        /// </code>
+        /// </remarks>
+        private static CodeMemberMethod CreatePropertyChangedMethod()
+        {
             var propertyChangedMethod = new CodeMemberMethod
-                                            {
-                                                Name = "OnPropertyChanged",
-                                                Attributes = MemberAttributes.Public
-                                            };
+                                                         {
+                                                             Name = "OnPropertyChanged",
+                                                             Attributes = MemberAttributes.Public
+                                                         };
             propertyChangedMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "info"));
 
             switch (GeneratorContext.GeneratorParams.Language)
@@ -360,8 +399,7 @@ namespace Xsd2Code.Library.Extensions
                         new CodeConditionStatement(new CodeSnippetExpression("handler != null"), statements));
                     break;
             }
-
-            type.Members.Add(propertyChangedMethod);
+            return propertyChangedMethod;
         }
 
         /// <summary>
@@ -516,12 +554,12 @@ namespace Xsd2Code.Library.Extensions
                                               "Seek",
                                               new CodeExpression[]
                                                   {
-                                                      new CodeTypeReferenceExpression("0"),
+                                                      new CodePrimitiveExpression(0),
                                                       new CodeTypeReferenceExpression("System.IO.SeekOrigin.Begin")
                                                   }));
 
             tryStatmanentsCol.Add(new CodeAssignStatement(
-                new CodeSnippetExpression("streamReader"),
+                new CodeVariableReferenceExpression("streamReader"),
                 CodeDomHelper.CreateInstance(typeof(StreamReader), new[] { "memoryStream" })));
 
             var readToEnd = CodeDomHelper.GetInvokeMethod("streamReader", "ReadToEnd");
@@ -581,10 +619,10 @@ namespace Xsd2Code.Library.Extensions
             var deserializeStatmanents = new CodeStatementCollection();
 
             tryStatmanentsCol.Add(new CodeAssignStatement(
-                          new CodeSnippetExpression("stringReader"),
+                          new CodeVariableReferenceExpression("stringReader"),
                           new CodeObjectCreateExpression(
                               new CodeTypeReference(typeof(StringReader)),
-                              new CodeExpression[] { new CodeSnippetExpression("xml") })));
+                              new CodeExpression[] { new CodeArgumentReferenceExpression("xml") })));
 
             // ----------------------------------------------------------
             // obj = (ClassName)serializer.Deserialize(xmlReader);
@@ -598,7 +636,7 @@ namespace Xsd2Code.Library.Extensions
                                                                 CodeDomHelper.GetInvokeMethod(
                                                                 "System.Xml.XmlReader", 
                                                                 "Create", 
-                                                                new CodeExpression[] { new CodeSnippetExpression("stringReader") })
+                                                                new CodeExpression[] { new CodeVariableReferenceExpression("stringReader") })
                                                             });
 
             var castExpr = new CodeCastExpression(deserializeTypeName, deserialize);
@@ -650,7 +688,7 @@ namespace Xsd2Code.Library.Extensions
             // -----------------
             deserializeMethod.Statements.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("exception"),
+                    new CodeArgumentReferenceExpression("exception"),
                     new CodePrimitiveExpression(null)));
 
             // -----------------
@@ -662,7 +700,7 @@ namespace Xsd2Code.Library.Extensions
                     {
                         deserializeMethod.Statements.Add(
                             new CodeAssignStatement(
-                              new CodeSnippetExpression("obj"),
+                              new CodeArgumentReferenceExpression("obj"),
                                 new CodeSnippetExpression(string.Format("default({0})", deserializeTypeName))));
                     }
 
@@ -671,7 +709,7 @@ namespace Xsd2Code.Library.Extensions
                     {
                         deserializeMethod.Statements.Add(
                              new CodeAssignStatement(
-                                new CodeSnippetExpression("obj"),
+                                new CodeArgumentReferenceExpression("obj"),
                                     new CodePrimitiveExpression(null)));
                     }
 
@@ -687,11 +725,11 @@ namespace Xsd2Code.Library.Extensions
             var deserializeInvoke =
                 new CodeMethodInvokeExpression(
                       new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.DeserializeMethodName),
-                        new CodeExpression[] { new CodeSnippetExpression("xml") });
+                        new CodeExpression[] { new CodeArgumentReferenceExpression("xml") });
 
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("obj"),
+                    new CodeArgumentReferenceExpression("obj"),
                         deserializeInvoke));
 
             tryStatmanentsCol.Add(CodeDomHelper.GetReturnTrue());
@@ -739,7 +777,7 @@ namespace Xsd2Code.Library.Extensions
             // ------------------------------------------------
             // return Deserialize(xml, out obj, out exception);
             // ------------------------------------------------
-            var xmlStringParam = new CodeSnippetExpression("xml");
+            var xmlStringParam = new CodeArgumentReferenceExpression("xml");
             var objParam = new CodeDirectionExpression(
                 FieldDirection.Out, new CodeFieldReferenceExpression(null, "obj"));
 
@@ -810,7 +848,7 @@ namespace Xsd2Code.Library.Extensions
 
             tryExpression.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("streamWriter"),
+                    new CodeVariableReferenceExpression("streamWriter"),
                     createTextMethodInvoke));
 
             // ----------------------------------
@@ -822,7 +860,7 @@ namespace Xsd2Code.Library.Extensions
                                                 "WriteLine",
                                                 new CodeExpression[]
                                                   {
-                                                      new CodeSnippetExpression("xmlString")
+                                                      new CodeVariableReferenceExpression("xmlString")
                                                   });
 
             tryExpression.Add(writeLineMethodInvoke);
@@ -868,7 +906,7 @@ namespace Xsd2Code.Library.Extensions
             saveToFileMethod.ReturnType = new CodeTypeReference(typeof(bool));
 
             saveToFileMethod.Statements.Add(
-                new CodeAssignStatement(new CodeSnippetExpression("exception"), new CodePrimitiveExpression(null)));
+                new CodeAssignStatement(new CodeArgumentReferenceExpression("exception"), new CodePrimitiveExpression(null)));
 
             // ---------------------
             // try {...} catch {...}
@@ -878,7 +916,7 @@ namespace Xsd2Code.Library.Extensions
             // ---------------------
             // SaveToFile(fileName);
             // ---------------------
-            var xmlStringParam = new CodeSnippetExpression("fileName");
+            var xmlStringParam = new CodeArgumentReferenceExpression("fileName");
 
             var saveToFileInvoke =
                 new CodeMethodInvokeExpression(
@@ -892,7 +930,7 @@ namespace Xsd2Code.Library.Extensions
             // Catch {...}
             // -----------
             var catchstmts = new CodeStatementCollection();
-            catchstmts.Add(new CodeAssignStatement(new CodeSnippetExpression("exception"), new CodeSnippetExpression("e")));
+            catchstmts.Add(new CodeAssignStatement(new CodeArgumentReferenceExpression("exception"), new CodeVariableReferenceExpression("e")));
 
             catchstmts.Add(CodeDomHelper.GetReturnFalse());
             var codeCatchClause = new CodeCatchClause("e", new CodeTypeReference(typeof(Exception)), catchstmts.ToArray());
@@ -955,24 +993,24 @@ namespace Xsd2Code.Library.Extensions
             // ---------------------------------------------------------------------------
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("file"),
+                    new CodeVariableReferenceExpression("file"),
                     new CodeObjectCreateExpression(
                         typeof(FileStream),
                         new CodeExpression[]
                         {
-                            new CodeSnippetExpression("fileName"),
-                            new CodeSnippetExpression("FileMode.Open"),
-                            new CodeSnippetExpression("FileAccess.Read")
+                            new CodeArgumentReferenceExpression("fileName"),
+                            CodeDomHelper.GetEnum("FileMode","Open"),
+                            CodeDomHelper.GetEnum("FileAccess","Read")
                         })));
 
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("sr"),
+                    new CodeVariableReferenceExpression("sr"),
                     new CodeObjectCreateExpression(
                         typeof(StreamReader),
                         new CodeExpression[]
                         {
-                            new CodeSnippetExpression("file"),
+                            new CodeVariableReferenceExpression("file"),
                         })));
 
             // ----------------------------------
@@ -990,7 +1028,7 @@ namespace Xsd2Code.Library.Extensions
             // ------------------------------------------------------
             // return Deserialize(xmlString, out obj, out exception);
             // ------------------------------------------------------            
-            var fileName = new CodeSnippetExpression("xmlString");
+            var fileName = new CodeVariableReferenceExpression("xmlString");
 
             var deserializeInvoke =
                 new CodeMethodInvokeExpression(
@@ -1071,7 +1109,7 @@ namespace Xsd2Code.Library.Extensions
 
             loadFromFileMethod.Comments.AddRange(
                 CodeDomHelper.GetSummaryComment(
-                    string.Format("Deserializes workflow markup from file into an {0} object", type.Name)));
+                    string.Format("Deserializes xml markup from file into an {0} object", type.Name)));
 
             loadFromFileMethod.Comments.Add(CodeDomHelper.GetParamComment("fileName", "string xml file to load and deserialize"));
             loadFromFileMethod.Comments.Add(CodeDomHelper.GetParamComment("obj", string.Format("Output {0} object", type.Name)));
@@ -1105,7 +1143,7 @@ namespace Xsd2Code.Library.Extensions
             // ------------------------------------------------------
             // return LoadFromFile(fileName, out obj, out exception);
             // ------------------------------------------------------
-            var fileName = new CodeSnippetExpression("fileName");
+            var fileName = new CodeArgumentReferenceExpression("fileName");
             var objParam = new CodeDirectionExpression(
                 FieldDirection.Out, new CodeFieldReferenceExpression(null, "obj"));
 
@@ -1285,8 +1323,9 @@ namespace Xsd2Code.Library.Extensions
 
                     var argument = new CodeAttributeArgument
                                        {
-                                           Value = new CodePropertyReferenceExpression(
-                                               new CodeSnippetExpression(typeof(EditorBrowsableState).Name), "Never")
+                                           //Value = new CodePropertyReferenceExpression(
+                                               //new CodeSnippetExpression(typeof(EditorBrowsableState).Name), "Never")
+                                           Value = CodeDomHelper.GetEnum(typeof(EditorBrowsableState).Name,"Never")
                                        };
 
                     field.CustomAttributes.Add(new CodeAttributeDeclaration(attributeType, new[] { argument }));
@@ -1352,9 +1391,10 @@ namespace Xsd2Code.Library.Extensions
             if (type.BaseType.Equals("System.String") && type.ArrayRank == 0)
             {
                 statement =
-                new CodeAssignStatement(
-                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
-                                        new CodeSnippetExpression("String.Empty"));
+                    new CodeAssignStatement(
+                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
+                        //new CodeSnippetExpression("String.Empty"));
+                        CodeDomHelper.GetStaticField(typeof(String), "Empty"));
             }
             else{
             statement =
@@ -1380,9 +1420,28 @@ namespace Xsd2Code.Library.Extensions
         /// <returns>return instance CodeConditionStatement</returns>
         protected virtual CodeAssignStatement CreateInstance(string name, CodeTypeReference type)
         {
-            return new CodeAssignStatement(
+            //return new CodeAssignStatement(
+            //                            new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
+            //                            new CodeObjectCreateExpression(type, new CodeExpression[0]));
+
+
+            CodeAssignStatement statement;
+            if (type.BaseType.Equals("System.String") && type.ArrayRank == 0)
+            {
+                statement =
+                new CodeAssignStatement(
                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
-                                        new CodeObjectCreateExpression(type, new CodeExpression[0]));
+                                        //new CodeSnippetExpression("String.Empty"));
+                                        CodeDomHelper.GetStaticField(typeof(String), "Empty"));
+            }
+            else
+            {
+                statement =
+                    new CodeAssignStatement(
+                                            new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
+                                            new CodeObjectCreateExpression(type, new CodeExpression[0]));
+            }
+            return statement;
         }
 
         /// <summary>
@@ -1497,8 +1556,8 @@ namespace Xsd2Code.Library.Extensions
                     var propChange =
                         new CodeMethodInvokeExpression(
                             new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "OnPropertyChanged"),
-                            new CodeExpression[] { new CodeSnippetExpression("\"" + prop.Name + "\"") });
-
+                            new CodeExpression[] { new CodePrimitiveExpression( prop.Name ) });
+                    
                     var propAssignStatment = prop.SetStatements[0] as CodeAssignStatement;
                     if (propAssignStatment != null)
                     {
@@ -1771,7 +1830,7 @@ namespace Xsd2Code.Library.Extensions
 
             statments.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression(fieldName),
+                    new CodeVariableReferenceExpression(fieldName),
                     new CodeObjectCreateExpression(
                         new CodeTypeReference(typeof(XmlSerializer)), new CodeExpression[] { typeofValue })));
 
@@ -1779,14 +1838,14 @@ namespace Xsd2Code.Library.Extensions
             serializerProperty.GetStatements.Add(
                 new CodeConditionStatement(
                     new CodeBinaryOperatorExpression(
-                        new CodeSnippetExpression(fieldName),
+                        new CodeVariableReferenceExpression(fieldName),
                         CodeBinaryOperatorType.IdentityEquality,
                         new CodePrimitiveExpression(null)),
                         statments.ToArray()));
 
 
             serializerProperty.GetStatements.Add(
-                new CodeMethodReturnStatement(new CodeSnippetExpression(fieldName)));
+                new CodeMethodReturnStatement(new CodeVariableReferenceExpression(fieldName)));
 
             classType.Members.Add(serializerProperty);
         }

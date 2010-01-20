@@ -5,6 +5,9 @@
 // <summary>
 //   Implements code generation extension for Silverlight 2.0
 // </summary>
+// <remarks>
+//  Updated 2010-01-20 Deerwood McCord Jr. Cleaned CodeSnippetStatements by replacing with specific CodeDom Expressions
+// </remarks>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Xsd2Code.Library.Extensions
@@ -77,29 +80,29 @@ namespace Xsd2Code.Library.Extensions
 
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
-                new CodeSnippetExpression("isoFile"),
+                new CodeVariableReferenceExpression("isoFile"),
                 CodeDomHelper.GetInvokeMethod("IsolatedStorageFile", "GetUserStoreForApplication")));
 
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("isoStream"),
+                    new CodeVariableReferenceExpression("isoStream"),
                     new CodeObjectCreateExpression(
                         typeof(IsolatedStorageFileStream),
                         new CodeExpression[]
                         {
-                             new CodeSnippetExpression("fileName"),
-                             new CodeSnippetExpression("FileMode.Open"),
-                             new CodeSnippetExpression("isoFile")
+                             new CodeArgumentReferenceExpression("fileName"),
+                             CodeDomHelper.GetEnum("FileMode","Open"),
+                             new CodeVariableReferenceExpression("isoFile")
                     })));
 
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("sr"),
+                    new CodeVariableReferenceExpression("sr"),
                     new CodeObjectCreateExpression(
                         typeof(StreamReader),
                         new CodeExpression[]
                         {
-                            new CodeSnippetExpression("isoStream"),
+                            new CodeVariableReferenceExpression("isoStream"),
                     })));
 
             // ----------------------------------
@@ -117,7 +120,7 @@ namespace Xsd2Code.Library.Extensions
             // ------------------------------------------------------
             // return Deserialize(xmlString, out obj, out exception);
             // ------------------------------------------------------            
-            var fileName = new CodeSnippetExpression("xmlString");
+            var fileName = new CodeVariableReferenceExpression("xmlString");
 
             var deserializeInvoke =
                 new CodeMethodInvokeExpression(
@@ -182,29 +185,29 @@ namespace Xsd2Code.Library.Extensions
 
             tryExpression.Add(
                 new CodeAssignStatement(
-                new CodeSnippetExpression("isoFile"),
+                new CodeVariableReferenceExpression("isoFile"),
                 CodeDomHelper.GetInvokeMethod("IsolatedStorageFile", "GetUserStoreForApplication")));
 
             tryExpression.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("isoStream"),
+                    new CodeVariableReferenceExpression("isoStream"),
                     new CodeObjectCreateExpression(
                         typeof(IsolatedStorageFileStream),
                         new CodeExpression[]
                         {
-                             new CodeSnippetExpression("fileName"),
-                             new CodeSnippetExpression("FileMode.Create"),
-                             new CodeSnippetExpression("isoFile")
+                             new CodeArgumentReferenceExpression("fileName"),
+                             CodeDomHelper.GetEnum("FileMode","Create"),
+                             new CodeVariableReferenceExpression("isoFile")
                     })));
 
             tryExpression.Add(
                 new CodeAssignStatement(
-                    new CodeSnippetExpression("streamWriter"),
+                    new CodeVariableReferenceExpression("streamWriter"),
                     new CodeObjectCreateExpression(
                         typeof(StreamWriter),
                         new CodeExpression[]
                         {
-                            new CodeSnippetExpression("isoStream"),
+                            new CodeVariableReferenceExpression("isoStream"),
                     })));
 
             // ------------------------------
@@ -227,7 +230,7 @@ namespace Xsd2Code.Library.Extensions
                                                 "WriteLine",
                                                 new CodeExpression[]
                                                   {
-                                                      new CodeSnippetExpression("xmlString")
+                                                      new CodeVariableReferenceExpression("xmlString")
                                                   });
 
             tryExpression.Add(writeLineMethodInvoke);
