@@ -270,6 +270,12 @@ namespace Xsd2Code.Library.Extensions
                     this.ProcessProperty(type, codeNamespace, codeMemberProperty, currentElement, schema);
             }
 
+            //DCM: Moved From GeneraterFacade File based removal to CodeDom Style Attribute-based removal
+            if (GeneratorContext.GeneratorParams.DisableDebug)
+            {
+                this.RemoveDebugAttributes(type.CustomAttributes);
+            }
+
             // Add new ctor if required
             if (addedToConstructor && newCTor)
                 type.Members.Add(ctor);
@@ -1067,7 +1073,7 @@ namespace Xsd2Code.Library.Extensions
                 CodeDomHelper.GetSummaryComment(
                     string.Format("Deserializes workflow markup from file into an {0} object", type.Name)));
 
-            loadFromFileMethod.Comments.Add(CodeDomHelper.GetParamComment("xml", "string workflow markup to deserialize"));
+            loadFromFileMethod.Comments.Add(CodeDomHelper.GetParamComment("fileName", "string xml file to load and deserialize"));
             loadFromFileMethod.Comments.Add(CodeDomHelper.GetParamComment("obj", string.Format("Output {0} object", type.Name)));
             loadFromFileMethod.Comments.Add(CodeDomHelper.GetParamComment("exception", "output Exception value if deserialize failed"));
 
@@ -1596,6 +1602,34 @@ namespace Xsd2Code.Library.Extensions
                 }
             }
 
+            foreach (var item in codeAttributes)
+            {
+                customAttributes.Remove(item);
+            }
+        }
+
+        /// <summary>
+        /// Removes the debug attributes.
+        /// </summary>
+        /// <param name="customAttributes">The custom attributes Collection.</param>
+        protected virtual void RemoveDebugAttributes(CodeAttributeDeclarationCollection customAttributes)
+        {
+            var codeAttributes = new List<CodeAttributeDeclaration>();
+            foreach (var attribute in customAttributes)
+            {
+                var attrib = attribute as CodeAttributeDeclaration;
+                if (attrib == null)
+                {
+                    continue;
+                }
+
+                if (attrib.Name == "System.Diagnostics.DebuggerStepThroughAttribute")
+                {
+                    codeAttributes.Add(attrib);
+                }
+            }
+            //DCM: OK not sure why it in this loop other than its like a transaction.
+            //Not going to touch it now.
             foreach (var item in codeAttributes)
             {
                 customAttributes.Remove(item);

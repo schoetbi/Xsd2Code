@@ -361,8 +361,11 @@ namespace Xsd2Code.Library
                     using (TextReader streamReader = new StreamReader(outputFilePath + ".tmp"))
                     {
                         string line;
+                        
+                        //DCM TODO Will refactor this to Not perform this last loop after verification that it works.
                         while ((line = streamReader.ReadLine()) != null)
                         {
+                            /* DCM REMOVED Language Specific Attribute removal Moved to CodeDOM Style in CodeExtension.ProcessClass()
                             if (line.Trim() == "[System.SerializableAttribute()]" ||
                                 line.Trim() == "[System.ComponentModel.DesignerCategoryAttribute(\"code\")]") continue;
 
@@ -372,6 +375,9 @@ namespace Xsd2Code.Library
                                 if (line.Trim() != "[System.Diagnostics.DebuggerStepThroughAttribute()]")
                                     outputStream.WriteLine(line);
                             }
+                             DCM REMOVED */
+
+                            outputStream.WriteLine(line);
                         }
                     }
                     outputStream.Close();
