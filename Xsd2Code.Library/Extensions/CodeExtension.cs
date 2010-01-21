@@ -694,6 +694,13 @@ namespace Xsd2Code.Library.Extensions
             // -----------------
             // obj = default(T);
             // -----------------
+            deserializeMethod.Statements.Add(
+                        new CodeAssignStatement(
+                          new CodeArgumentReferenceExpression("obj"),
+                            new CodeDefaultValueExpression(new CodeTypeReference(deserializeTypeName))
+                            ));
+
+            /* DCM REMOVE Switch Statement Dependent Code
             switch (GeneratorContext.GeneratorParams.Language)
             {
                 case GenerationLanguage.CSharp:
@@ -715,6 +722,7 @@ namespace Xsd2Code.Library.Extensions
 
                     break;
             }
+             */
 
             // ---------------------
             // try {...} catch {...}
