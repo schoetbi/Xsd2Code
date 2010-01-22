@@ -40,7 +40,7 @@ namespace Xsd2Code
             var generatorParams = new GeneratorParams {InputFilePath = xsdFilePath};
 
             // When only the XSD file name is specified, 
-            // try to locate generated Designer file and load generator parameters from the file header
+            // try to locate generated Designer file and load output parameters from the file header
             if (args.Length == 1)
             {
                 string outputFilePath;
@@ -71,6 +71,7 @@ namespace Xsd2Code
             {
                 switch (args[i].Trim().ToLower())
                 {
+                    
                     case "/n":
                     case "/ns":
                     case "/namespace":
@@ -112,10 +113,12 @@ namespace Xsd2Code
                         }
                         break;
 
+                    //Duplicate with /pl
                     case "/cb":
                     case "/codebase":
                         if (i < args.Length - 1)
                         {
+                            Console.WriteLine("Warning: /cb /codebase is obsolete please use /pl[atform] <Platform> - Generated code target platform (Net20|Net30|Net35|Silverlight20). Default: Net20");
                             generatorParams.TargetFramework = Utility.ToEnum<TargetFramework>(args[i + 1]);
                             i++;
                         }
@@ -127,7 +130,7 @@ namespace Xsd2Code
                         {
                             //generatorParams.CustomUsingsString = args[i + 1];
 
-                            foreach(string item in args[i+1].Split(';'))
+                            foreach(string item in args[i+1].Split(','))
                             {
                                 generatorParams.CustomUsings.Add(new NamespaceParam { NameSpace = item });
                             }                            

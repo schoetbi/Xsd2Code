@@ -34,6 +34,7 @@
 2010-01-10, DCM: Fixed Documentation Comments being improperly formatted when Using CodeDomHelper Classes
 2010-01-20, DCM: Cleaned up CodeSnippetExpressions Converting to appropriate CodeDom specific Expression. Further removing
                  language specific Switch statements where possible.
-
+2010-01-22, DCM: Updated Help and readme to match current command line.
+				 /cb,/codebase and /i[nput] /using should be retired.
 				 
 		
