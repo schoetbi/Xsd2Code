@@ -105,6 +105,8 @@
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="CodeBase.cs" />
+    <Compile Include="CodeDomProviderFactory.cs" />
     <Compile Include="Extensions\CodeExtension.cs" />
     <Compile Include="Extensions\CodeExtensionAttribute.cs" />
     <Compile Include="Extensions\SilverlightExtension.cs" />
@@ -145,6 +147,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="defaults.xsd2code.template" />
     <None Include="key.snk" />
   </ItemGroup>
   <ItemGroup>
