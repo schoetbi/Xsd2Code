@@ -147,7 +147,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="defaults.xsd2code.template" />
+    <Content Include="defaults.xsd2code.template">
+    </Content>
     <None Include="key.snk" />
   </ItemGroup>
   <ItemGroup>

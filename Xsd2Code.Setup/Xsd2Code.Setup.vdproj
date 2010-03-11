@@ -117,30 +117,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_334AD48D8BA4B19B5C1C937FE136E37C"
-        "OwnerKey" = "8:_2DECD1E3637A43FA94AF210B2D7AA487"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_334AD48D8BA4B19B5C1C937FE136E37C"
-        "OwnerKey" = "8:_647C0AD6D184438F9314D2B6DD0FD9C1"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_334AD48D8BA4B19B5C1C937FE136E37C"
-        "OwnerKey" = "8:_61D0BF83862A4181AEEADA21FB1C17A9"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_334AD48D8BA4B19B5C1C937FE136E37C"
-        "OwnerKey" = "8:_43143199410A44EBBF1E69F608989EB1"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_43143199410A44EBBF1E69F608989EB1"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -154,7 +130,7 @@
         "Entry"
         {
         "MsmKey" = "8:_4DC3744B0E677F5E6336527424A1C8B4"
-        "OwnerKey" = "8:_334AD48D8BA4B19B5C1C937FE136E37C"
+        "OwnerKey" = "8:_731CCAE682EF97917B48C051994860EA"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -245,6 +221,30 @@
         {
         "MsmKey" = "8:_647C0AD6D184438F9314D2B6DD0FD9C1"
         "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_731CCAE682EF97917B48C051994860EA"
+        "OwnerKey" = "8:_2DECD1E3637A43FA94AF210B2D7AA487"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_731CCAE682EF97917B48C051994860EA"
+        "OwnerKey" = "8:_647C0AD6D184438F9314D2B6DD0FD9C1"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_731CCAE682EF97917B48C051994860EA"
+        "OwnerKey" = "8:_61D0BF83862A4181AEEADA21FB1C17A9"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_731CCAE682EF97917B48C051994860EA"
+        "OwnerKey" = "8:_43143199410A44EBBF1E69F608989EB1"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -574,7 +574,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_334AD48D8BA4B19B5C1C937FE136E37C"
+        "OwnerKey" = "8:_731CCAE682EF97917B48C051994860EA"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -905,37 +905,6 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_334AD48D8BA4B19B5C1C937FE136E37C"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Xsd2Code.Library, Version=3.3.0.20794, Culture=neutral, PublicKeyToken=04032056d5f54f80, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_334AD48D8BA4B19B5C1C937FE136E37C"
-                    {
-                    "Name" = "8:Xsd2Code.Library.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:Xsd2Code.Library.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_006CBF0784B24831A183FEE0E7D94E51"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_4D5B5B3E873C568A2E6832D15B509483"
             {
             "AssemblyRegister" = "3:1"
@@ -1129,6 +1098,37 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_731CCAE682EF97917B48C051994860EA"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:Xsd2Code.Library, Version=3.3.0.29943, Culture=neutral, PublicKeyToken=04032056d5f54f80, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_731CCAE682EF97917B48C051994860EA"
+                    {
+                    "Name" = "8:Xsd2Code.Library.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:Xsd2Code.Library.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_006CBF0784B24831A183FEE0E7D94E51"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_795F0A9412FC2A617F571C7AC8649416"
@@ -2282,7 +2282,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_2DECD1E3637A43FA94AF210B2D7AA487"
             {
-            "SourcePath" = "8:..\\Xsd2Code.Console\\obj\\Release\\Xsd2Code.exe"
+            "SourcePath" = "8:..\\Xsd2Code.Console\\obj\\Debug\\Xsd2Code.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_006CBF0784B24831A183FEE0E7D94E51"
@@ -2308,9 +2308,37 @@
                 {
                 }
             }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_3EC6531F7942448EA1B62123A3F681B6"
+            {
+            "SourcePath" = "8:"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_006CBF0784B24831A183FEE0E7D94E51"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:ContentFiles"
+            "OutputProjectGuid" = "8:{1B59FB12-699C-4927-ACA3-D7F0E0F79100}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_43143199410A44EBBF1E69F608989EB1"
             {
-            "SourcePath" = "8:..\\Xsd2Code.CustomTool\\obj\\Release\\Xsd2Code.CustomTool.dll"
+            "SourcePath" = "8:..\\Xsd2Code.CustomTool\\obj\\Debug\\Xsd2Code.CustomTool.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_E8C374FC59DF4755876911DCF099C3C1"
@@ -2338,7 +2366,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_61D0BF83862A4181AEEADA21FB1C17A9"
             {
-            "SourcePath" = "8:..\\Xsd2Code.Addin\\obj\\Release\\Xsd2Code.Addin.dll"
+            "SourcePath" = "8:..\\Xsd2Code.Addin\\obj\\Debug\\Xsd2Code.Addin.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_006CBF0784B24831A183FEE0E7D94E51"
@@ -2366,7 +2394,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_647C0AD6D184438F9314D2B6DD0FD9C1"
             {
-            "SourcePath" = "8:..\\Xsd2Code.CustomTool\\obj\\Release\\Xsd2Code.CustomTool.dll"
+            "SourcePath" = "8:..\\Xsd2Code.CustomTool\\obj\\Debug\\Xsd2Code.CustomTool.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_006CBF0784B24831A183FEE0E7D94E51"
@@ -2394,7 +2422,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_D38EA559F6BE4D89980464F2DCA34A8E"
             {
-            "SourcePath" = "8:..\\Xsd2Code.Library\\obj\\Release\\Xsd2Code.Library.dll"
+            "SourcePath" = "8:..\\Xsd2Code.Library\\obj\\Debug\\Xsd2Code.Library.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_E8C374FC59DF4755876911DCF099C3C1"
