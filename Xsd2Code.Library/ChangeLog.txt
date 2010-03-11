@@ -36,5 +36,24 @@
                  language specific Switch statements where possible.
 2010-01-22, DCM: Updated Help and readme to match current command line.
 				 /cb,/codebase and /i[nput] /using should be retired.
+2010-03-11, DCM: Modified the Param Loading process to search for the Auto-generated Tag. 
+				 Added the concept of a defaults.xsd2code parameter file.
+				 Added the concept of a <schemaName>.xsd.xsd2code parameter file per schema ( <schemaName>.xsd ).
 				 
-		
+				 Parameter loading process was modified as follows:
+					
+					if a <schemaName>.xsd.xsd2code parameter for the schema named <schemaName>.xsd
+					then it is loaded and used for Parameters. Its a per schema override. 
+					Sorry No user interface at this time.
+					
+					Else if an <output>.<languageExtension> such as .cs or .vb exists
+					then read its paramters.
+					
+					else if a defaults.xsd2code file exist then use its parematers.
+					
+					else use the defaults from code.
+
+				 This search order will only happen on the commandline if a schema file is the single argument. This
+				 is the prior behavior.
+				 
+				 Added default defaults.xsd2code

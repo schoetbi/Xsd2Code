@@ -22,7 +22,9 @@ namespace Xsd2Code.Library.Helpers
             string upperData = xmlStream.ToUpper();
             tag = tag.ToUpper();
             int startpos = upperData.IndexOf("<" + tag + ">") + 2 + tag.Length;
-            int endpos = upperData.IndexOf("</" + tag + ">");
+            
+            //Small Optimization as properties get longer; start searching from start position.
+            int endpos = upperData.IndexOf("</" + tag + ">", startpos);
             int lenght = endpos - startpos;
             if (lenght > 0)
                 return xmlStream.Substring(startpos, lenght);

@@ -421,7 +421,7 @@ namespace Xsd2Code.Library.Extensions
                     {
                         var xmlDoc = item as XmlSchemaDocumentation;
                         if (xmlDoc == null) continue;
-                        this.CreateCommentStatment(codeTypeDeclaration.Comments, xmlDoc);
+                        this.CreateCommentStatement(codeTypeDeclaration.Comments, xmlDoc);
                     }
                 }
             }
@@ -1291,16 +1291,16 @@ namespace Xsd2Code.Library.Extensions
         /// </summary>
         /// <param name="codeStatmentColl">CodeCommentStatementCollection collection</param>
         /// <param name="xmlDoc">Schema documentation</param>
-        protected virtual void CreateCommentStatment(
-                                                     CodeCommentStatementCollection codeStatmentColl,
+        protected virtual void CreateCommentStatement(
+                                                     CodeCommentStatementCollection codeStatementColl,
                                                      XmlSchemaDocumentation xmlDoc)
         {
-            codeStatmentColl.Clear();
+            codeStatementColl.Clear();
             foreach (XmlNode itemDoc in xmlDoc.Markup)
             {
                 var textLine = itemDoc.InnerText.Trim();
                 if (textLine.Length > 0)
-                    CodeDomHelper.CreateSummaryComment(codeStatmentColl, textLine);
+                    CodeDomHelper.CreateSummaryComment(codeStatementColl, textLine);
             }
         }
 
@@ -1717,7 +1717,7 @@ namespace Xsd2Code.Library.Extensions
                     var xmlDoc = annotation as XmlSchemaDocumentation;
                     if (xmlDoc != null)
                     {
-                        this.CreateCommentStatment(codeCommentStatementCollection, xmlDoc);
+                        this.CreateCommentStatement(codeCommentStatementCollection, xmlDoc);
                     }
                 }
             }
