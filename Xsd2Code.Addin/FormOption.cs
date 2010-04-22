@@ -61,9 +61,6 @@ namespace Xsd2Code.Addin
                     case "{B5E9BD33-6D3E-4B5D-925E-8A43B79820B4}":
                         this.generatorParams.Language = GenerationLanguage.VisualBasic;
                         break;
-                    case "{B5E9BD36-6D3E-4B5D-925E-8A43B79820B4}":
-                        this.generatorParams.Language = GenerationLanguage.VisualCpp;
-                        break;
                     default:
                         this.generatorParams.Language = GenerationLanguage.CSharp;
                         break;

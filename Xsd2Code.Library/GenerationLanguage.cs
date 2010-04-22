@@ -26,12 +26,6 @@ namespace Xsd2Code.Library
         /// Visual Basic language
         /// </summary>
         [Description("Visual Basic")]
-        VisualBasic,
-
-        /// <summary>
-        /// Visual c++
-        /// </summary>
-        [Description("Visual C++")]
-        VisualCpp
+        VisualBasic
     }
 }

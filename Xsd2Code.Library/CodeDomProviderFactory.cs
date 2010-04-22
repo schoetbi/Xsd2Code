@@ -2,8 +2,8 @@
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using Microsoft.VisualBasic;
-using Microsoft.VisualC;
 using Xsd2Code.Library.Helpers;
+using Microsoft.VisualC;
 
 namespace Xsd2Code.Library
 {
@@ -41,9 +41,6 @@ namespace Xsd2Code.Library
 
                 case GenerationLanguage.VisualBasic:
                     return new VBCodeProvider();
-
-                case GenerationLanguage.VisualCpp:
-                    return new CppCodeProvider();
 
                 default:
                     throw new NotImplementedException(string.Format("Code provider for language {0} is not supported", Utility.GetEnumDescription(language)));

@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="CodeDomProviderFactory.cs" company="Xsd2Code">
 //   N/A
 // </copyright>
@@ -13,7 +13,6 @@ namespace Xsd2Code.Library.Helpers
     using System.CodeDom.Compiler;
     using Microsoft.CSharp;
     using Microsoft.VisualBasic;
-    using Microsoft.VisualC;
 
     /// <summary>
     /// Code DOM Provider factory design pattern implementation
@@ -34,9 +33,6 @@ namespace Xsd2Code.Library.Helpers
 
                 case GenerationLanguage.VisualBasic:
                     return new VBCodeProvider();
-
-                case GenerationLanguage.VisualCpp:
-                    return new CppCodeProvider();
 
                 default:
                     throw new NotImplementedException(

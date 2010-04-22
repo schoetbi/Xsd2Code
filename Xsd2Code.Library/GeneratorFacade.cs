@@ -365,18 +365,6 @@ namespace Xsd2Code.Library
                         //DCM TODO Will refactor this to Not perform this last loop after verification that it works.
                         while ((line = streamReader.ReadLine()) != null)
                         {
-                            /* DCM REMOVED Language Specific Attribute removal Moved to CodeDOM Style in CodeExtension.ProcessClass()
-                            if (line.Trim() == "[System.SerializableAttribute()]" ||
-                                line.Trim() == "[System.ComponentModel.DesignerCategoryAttribute(\"code\")]") continue;
-
-                            if (GeneratorContext.GeneratorParams.DisableDebug) outputStream.WriteLine(line);
-                            else
-                            {
-                                if (line.Trim() != "[System.Diagnostics.DebuggerStepThroughAttribute()]")
-                                    outputStream.WriteLine(line);
-                            }
-                             DCM REMOVED */
-
                             outputStream.WriteLine(line);
                         }
                     }

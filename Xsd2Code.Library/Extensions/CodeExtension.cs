@@ -383,7 +383,6 @@ namespace Xsd2Code.Library.Extensions
                     break;
 
                 case GenerationLanguage.CSharp:
-                case GenerationLanguage.VisualCpp:
 
                     propertyChangedMethod.Statements.Add(
                         new CodeExpressionStatement(
@@ -1663,6 +1662,8 @@ namespace Xsd2Code.Library.Extensions
                     attrib.Name == "System.Xml.Serialization.XmlTypeAttribute" ||
                     attrib.Name == "System.Xml.Serialization.XmlElementAttribute" ||
                     attrib.Name == "System.CodeDom.Compiler.GeneratedCodeAttribute" ||
+                    attrib.Name == "System.SerializableAttribute" ||
+                    attrib.Name == "System.ComponentModel.DesignerCategoryAttribute" ||
                     attrib.Name == "System.Xml.Serialization.XmlRootAttribute")
                 {
                     codeAttributes.Add(attrib);

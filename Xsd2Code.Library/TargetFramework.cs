@@ -23,6 +23,9 @@ namespace Xsd2Code.Library
         [Description(".Net Framework 3.5")]
         Net35,
 
+        [Description(".Net Framework 4.0")]
+        Net40,
+
         [Description("Silverlight")]
         Silverlight
     }

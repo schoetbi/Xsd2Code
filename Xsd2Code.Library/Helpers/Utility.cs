@@ -34,21 +34,10 @@ namespace Xsd2Code.Library.Helpers
                 case "csharp":
                 case "visualcsharp":
                     return GenerationLanguage.CSharp;
-                case "c":
-                case "cpp":
-                case "c+":
-                case "c++":
-                case "cplus":
-                case "cplusplus":
-                case "visualc":
-                case "visualcplus":
-                case "visualcplusplus":
-                    return GenerationLanguage.VisualCpp;
                 case "vb":
-                    return GenerationLanguage.VisualBasic;
                 case "bas":
                 case "visualbasic":
-                    return GenerationLanguage.VisualCpp;
+                    return GenerationLanguage.VisualBasic;
             }
 
             return ToEnum<GenerationLanguage>(input);
