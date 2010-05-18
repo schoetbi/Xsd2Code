@@ -18,7 +18,8 @@
   </xs:element>
   <xs:complexType name="dvd">
     <xs:sequence>
-      <xs:element name="Title" nillable="true" default="DefaultTitle" type="xs:string">
+        <xs:element name="Year" nillable="true" type="xs:int"></xs:element>
+        <xs:element name="Title" nillable="true" default="DefaultTitle" type="xs:string">
         <xs:annotation>
           <xs:documentation>
               Gets or sets the title of dvd.

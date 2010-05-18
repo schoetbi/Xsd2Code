@@ -257,10 +257,10 @@ namespace Xsd2Code.TestUnit
                 newitem.Actor.Add(new Actor {firstname = "James", nationality = "Us"});
                 dvd.Dvds.Add(newitem);
                 var originalXml = dvd.Serialize();
-                dvd.SaveToFile("dvd.xml");
+                dvd.SaveToFile(@"c:\temp\dvd.xml");
 
                 // Load data fom file and serialize it again.
-                var loadedDvdCollection = DvdCollection.LoadFromFile("dvd.xml");
+                var loadedDvdCollection = DvdCollection.LoadFromFile(@"c:\temp\dvd.xml");
                 var finalXml = loadedDvdCollection.Serialize();
 
                 // Then comprate two xml string

@@ -91,7 +91,7 @@ namespace Xsd2Code.Library.Extensions
 
             foreach (var type in types)
             {
-                
+
                 //Fixes http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8781
                 //  and http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6944
                 if (GeneratorContext.GeneratorParams.ExcludeIncludedTypes)
@@ -137,7 +137,7 @@ namespace Xsd2Code.Library.Extensions
             foreach (var item in schema.Items)
             {
                 var complexItem = item as XmlSchemaComplexType;
-                if(complexItem != null)
+                if (complexItem != null)
                 {
                     if (complexItem.Name == type.Name)
                     {
@@ -158,22 +158,22 @@ namespace Xsd2Code.Library.Extensions
             //TODO: Does not work for combined anonymous types 
             //fallback: Check if the namespace attribute of the type equals the namespace of the file.
             //first, find the XmlType attribute.
-            foreach(CodeAttributeDeclaration attribute in type.CustomAttributes)
+            foreach (CodeAttributeDeclaration attribute in type.CustomAttributes)
             {
-                if(attribute.Name == "System.Xml.Serialization.XmlTypeAttribute")
+                if (attribute.Name == "System.Xml.Serialization.XmlTypeAttribute")
                 {
-                    foreach(CodeAttributeArgument argument in attribute.Arguments)
+                    foreach (CodeAttributeArgument argument in attribute.Arguments)
                     {
-                        if(argument.Name == "Namespace")
+                        if (argument.Name == "Namespace")
                         {
-                            if(((CodePrimitiveExpression)argument.Value).Value == schema.TargetNamespace)
+                            if (((CodePrimitiveExpression)argument.Value).Value == schema.TargetNamespace)
                             {
                                 return true;
                             }
                         }
                     }
                 }
-                 
+
             }
 
             return false;
@@ -219,6 +219,33 @@ namespace Xsd2Code.Library.Extensions
             return cloneMethod;
         }
 
+        protected static CodeTypeMember GetShouldSerializeMethod(CodeMemberProperty prop)
+        {
+            // ----------------------------------------------------------------------
+            // /// <summary>
+            // /// Test whether PropertyName should be serialized
+            // /// </summary>
+            // public bool ShouldSerializePropertyName()
+            // {
+            //    return this.PropertyName.HasValue;
+            // }
+            // ----------------------------------------------------------------------
+            var cloneMethod = new CodeMemberMethod
+                                  {
+                                      Attributes = MemberAttributes.Public,
+                                      Name = string.Format("ShouldSerialize{0}", prop.Name),
+                                      ReturnType = new CodeTypeReference(typeof(bool))
+                                  };
+
+            CodeDomHelper.CreateSummaryComment(
+                cloneMethod.Comments,
+                string.Format("Test whether {0} should be serialized", prop.Name));
+
+            var hasValueStatment = new CodeFieldReferenceExpression(null, string.Format("{0}.HasValue", prop.Name));
+            var statement = new CodeMethodReturnStatement(hasValueStatment);
+            cloneMethod.Statements.Add(statement);
+            return cloneMethod;
+        }
         /// <summary>
         /// Processes the class.
         /// </summary>
@@ -331,9 +358,9 @@ namespace Xsd2Code.Library.Extensions
             /* DCM REMOVED Uses CodeSnippetExpressions
             var propertyChangedMethod = CreatePropertyChangedMethod();
              */
- 
+
             var propertyChangedMethod = CodeDomHelper.CreatePropertyChangedMethod();
-            
+
             type.Members.Add(propertyChangedMethod);
         }
 
@@ -1066,7 +1093,7 @@ namespace Xsd2Code.Library.Extensions
             string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
 
             CodeTypeReference teeType = new CodeTypeReference(typeName);
-            
+
             var saveToFileMethodList = new List<CodeMemberMethod>();
             var loadFromFileMethod = new CodeMemberMethod
                                          {
@@ -1331,8 +1358,8 @@ namespace Xsd2Code.Library.Extensions
                     var argument = new CodeAttributeArgument
                                        {
                                            //Value = new CodePropertyReferenceExpression(
-                                               //new CodeSnippetExpression(typeof(EditorBrowsableState).Name), "Never")
-                                           Value = CodeDomHelper.GetEnum(typeof(EditorBrowsableState).Name,"Never")
+                                           //new CodeSnippetExpression(typeof(EditorBrowsableState).Name), "Never")
+                                           Value = CodeDomHelper.GetEnum(typeof(EditorBrowsableState).Name, "Never")
                                        };
 
                     field.CustomAttributes.Add(new CodeAttributeDeclaration(attributeType, new[] { argument }));
@@ -1400,14 +1427,15 @@ namespace Xsd2Code.Library.Extensions
                 statement =
                     new CodeAssignStatement(
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
-                        //new CodeSnippetExpression("String.Empty"));
+                    //new CodeSnippetExpression("String.Empty"));
                         CodeDomHelper.GetStaticField(typeof(String), "Empty"));
             }
-            else{
-            statement =
-                new CodeAssignStatement(
-                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
-                                        new CodeObjectCreateExpression(type, new CodeExpression[0]));
+            else
+            {
+                statement =
+                    new CodeAssignStatement(
+                                            new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
+                                            new CodeObjectCreateExpression(type, new CodeExpression[0]));
             }
 
             return
@@ -1438,7 +1466,7 @@ namespace Xsd2Code.Library.Extensions
                 statement =
                 new CodeAssignStatement(
                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), name),
-                                        //new CodeSnippetExpression("String.Empty"));
+                    //new CodeSnippetExpression("String.Empty"));
                                         CodeDomHelper.GetStaticField(typeof(String), "Empty"));
             }
             else
@@ -1529,6 +1557,11 @@ namespace Xsd2Code.Library.Extensions
                 collectionTypesFields.Add(prop.Name);
             }
 
+            //if (prop.Type.BaseType.Contains("System.Nullable"))
+            //{
+            //    this.CreateShouldSerializeMethod(type, prop);
+            //}
+
             if (GeneratorContext.GeneratorParams.GenerateDataContracts)
             {
                 this.CreateDataMemberAttribute(prop);
@@ -1563,8 +1596,8 @@ namespace Xsd2Code.Library.Extensions
                     var propChange =
                         new CodeMethodInvokeExpression(
                             new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "OnPropertyChanged"),
-                            new CodeExpression[] { new CodePrimitiveExpression( prop.Name ) });
-                    
+                            new CodeExpression[] { new CodePrimitiveExpression(prop.Name) });
+
                     var propAssignStatment = prop.SetStatements[0] as CodeAssignStatement;
                     if (propAssignStatment != null)
                     {
@@ -1622,6 +1655,11 @@ namespace Xsd2Code.Library.Extensions
                     }
                 }
             }
+        }
+
+        private void CreateShouldSerializeMethod(CodeTypeDeclaration type, CodeMemberProperty prop)
+        {
+            type.Members.Add(GetShouldSerializeMethod(prop));
         }
 
         /// <summary>
@@ -1814,7 +1852,7 @@ namespace Xsd2Code.Library.Extensions
 
 
             //VB is not Case Sensitive
-            string fieldName = GeneratorContext.GeneratorParams.Language == GenerationLanguage.VisualBasic ?  "sSerializer" : "serializer" ;
+            string fieldName = GeneratorContext.GeneratorParams.Language == GenerationLanguage.VisualBasic ? "sSerializer" : "serializer";
 
             // -----------------------------------------------------------------
             // private static System.Xml.Serialization.XmlSerializer serializer;
