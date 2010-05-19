@@ -61,6 +61,11 @@ namespace Xsd2Code.Library.Extensions
         /// </summary>
         protected static List<string> collectionTypesFields = new List<string>();
 
+        /// <summary>
+        /// Contains all collection fields.
+        /// </summary>
+        protected static List<string> shouldSerializeFields = new List<string>();
+
         #endregion
 
         #region public method
@@ -219,7 +224,7 @@ namespace Xsd2Code.Library.Extensions
             return cloneMethod;
         }
 
-        protected static CodeTypeMember GetShouldSerializeMethod(CodeMemberProperty prop)
+        protected static CodeTypeMember GetShouldSerializeMethod(string propertyName)
         {
             // ----------------------------------------------------------------------
             // /// <summary>
@@ -233,15 +238,15 @@ namespace Xsd2Code.Library.Extensions
             var cloneMethod = new CodeMemberMethod
                                   {
                                       Attributes = MemberAttributes.Public,
-                                      Name = string.Format("ShouldSerialize{0}", prop.Name),
+                                      Name = string.Format("ShouldSerialize{0}", propertyName),
                                       ReturnType = new CodeTypeReference(typeof(bool))
                                   };
 
             CodeDomHelper.CreateSummaryComment(
                 cloneMethod.Comments,
-                string.Format("Test whether {0} should be serialized", prop.Name));
+                string.Format("Test whether {0} should be serialized", propertyName));
 
-            var hasValueStatment = new CodeFieldReferenceExpression(null, string.Format("{0}.HasValue", prop.Name));
+            var hasValueStatment = new CodeFieldReferenceExpression(null, string.Format("{0}.HasValue", propertyName));
             var statement = new CodeMethodReturnStatement(hasValueStatment);
             cloneMethod.Statements.Add(statement);
             return cloneMethod;
@@ -258,6 +263,7 @@ namespace Xsd2Code.Library.Extensions
             var newCTor = false;
 
             var ctor = this.GetConstructor(type, ref newCTor);
+            shouldSerializeFields.Clear();
 
             // Inherits from EntityBase
             if (GeneratorContext.GeneratorParams.UseGenericBaseClass)
@@ -308,6 +314,11 @@ namespace Xsd2Code.Library.Extensions
             // Add new ctor if required
             if (addedToConstructor && newCTor)
                 type.Members.Add(ctor);
+
+            foreach (var shouldSerializeField in shouldSerializeFields)
+            {
+                this.CreateShouldSerializeMethod(type, shouldSerializeField);
+            }
 
             // If don't use base class, generate all methods inside class
             if (!GeneratorContext.GeneratorParams.UseGenericBaseClass)
@@ -1557,10 +1568,10 @@ namespace Xsd2Code.Library.Extensions
                 collectionTypesFields.Add(prop.Name);
             }
 
-            //if (prop.Type.BaseType.Contains("System.Nullable"))
-            //{
-            //    this.CreateShouldSerializeMethod(type, prop);
-            //}
+            if (prop.Type.BaseType.Contains("System.Nullable"))
+            {
+                shouldSerializeFields.Add(prop.Name);
+            }
 
             if (GeneratorContext.GeneratorParams.GenerateDataContracts)
             {
@@ -1657,9 +1668,9 @@ namespace Xsd2Code.Library.Extensions
             }
         }
 
-        private void CreateShouldSerializeMethod(CodeTypeDeclaration type, CodeMemberProperty prop)
+        private void CreateShouldSerializeMethod(CodeTypeDeclaration type, string propertyName)
         {
-            type.Members.Add(GetShouldSerializeMethod(prop));
+            type.Members.Add(GetShouldSerializeMethod(propertyName));
         }
 
         /// <summary>
