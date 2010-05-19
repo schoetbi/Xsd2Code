@@ -27,7 +27,12 @@
         /// <summary>
         /// Indicate if use base class for all methods
         /// </summary>
-        public const string USEGENERICBASECLASSTAG = "UseBaseClass";       
+        public const string USEGENERICBASECLASSTAG = "UseBaseClass";
+
+        /// <summary>
+        /// Indicate if generate ShouldSerilize method for nullable type.
+        /// </summary>
+        public const string GENERATESHOULDSERIALIZETAG = "GenerateShouldSerialize";
 
         /// <summary>
         /// Language tag

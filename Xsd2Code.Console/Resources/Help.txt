@@ -62,6 +62,10 @@ Options:
     /gbc[+]                             - Use Generic Base Class 
     /gbc-                               - Do not use Generic Base Class (default)
     
+	/ssp
+	/ssp[+]								- Generate ShouldSerilizeProperty method for nullable type
+	/ssp[-]                             - Do not generate ShouldSerilizeProperty method for nullable type (default)
+
     /hp[+]                              - Hide private fields in IDE
     /hp-                                - Show private fields in IDE (default)
 

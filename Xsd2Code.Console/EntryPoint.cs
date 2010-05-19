@@ -281,6 +281,14 @@ namespace Xsd2Code
                         generatorParams.HidePrivateFieldInIde = false;
                         break;
 
+                    case "/ssp":
+                    case "/ssp+":
+                        generatorParams.GenerateShouldSerializeProperty = true;
+                        break;
+                    case "/ssp-":
+                        generatorParams.GenerateShouldSerializeProperty = false;
+                        break;
+
                     case "/s":
                     case "/s+":
                     case "/is":

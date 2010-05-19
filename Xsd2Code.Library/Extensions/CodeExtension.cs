@@ -315,9 +315,12 @@ namespace Xsd2Code.Library.Extensions
             if (addedToConstructor && newCTor)
                 type.Members.Add(ctor);
 
-            foreach (var shouldSerializeField in shouldSerializeFields)
+            if (GeneratorContext.GeneratorParams.GenerateShouldSerializeProperty)
             {
-                this.CreateShouldSerializeMethod(type, shouldSerializeField);
+                foreach (var shouldSerializeField in shouldSerializeFields)
+                {
+                    this.CreateShouldSerializeMethod(type, shouldSerializeField);
+                }
             }
 
             // If don't use base class, generate all methods inside class

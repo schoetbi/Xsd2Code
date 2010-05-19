@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Xsd2Code.Library.Helpers;
@@ -258,6 +259,14 @@ namespace Xsd2Code.Library
         /// </summary>
         [Category("Behavior")]
         [DefaultValue(false)]
+        [Description("ShouldSerializeProperty is only used for nullable type. If nullable type has no value,  the XMLSerialiser will exclude the property.")]
+        public bool GenerateShouldSerializeProperty { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
+        /// </summary>
+        [Category("Behavior")]
+        [DefaultValue(false)]
         [Description("Indicating whether if generate .NET 2.0 serialization attributes.")]
         public bool GenerateXMLAttributes { get; set; }
 
@@ -347,7 +356,7 @@ namespace Xsd2Code.Library
         /// <param name="xsdFilePath">The XSD file path.</param>
         /// <param name="outputFile">The output file.</param>
         /// <returns>GeneratorParams instance</returns>
-        
+
         public static GeneratorParams LoadFromFile(string xsdFilePath, out string outputFile)
         {
             var parameters = new GeneratorParams();
@@ -420,13 +429,12 @@ namespace Xsd2Code.Library
 
             if (optionLine != null)
             {
-                parameters.NameSpace = XmlHelper.ExtractStrFromXML(optionLine, GeneratorContext.NAMESPACETAG);
+                parameters.NameSpace = optionLine.ExtractStrFromXML(GeneratorContext.NAMESPACETAG);
                 parameters.CollectionObjectType =
                         Utility.ToEnum<CollectionType>(
-                                XmlHelper.ExtractStrFromXML(optionLine, GeneratorContext.COLLECTIONTAG));
+                                optionLine.ExtractStrFromXML(GeneratorContext.COLLECTIONTAG));
                 parameters.Language =
-                        Utility.ToEnum<GenerationLanguage>(XmlHelper.ExtractStrFromXML(optionLine,
-                                                                                       GeneratorContext.CODETYPETAG));
+                        Utility.ToEnum<GenerationLanguage>(optionLine.ExtractStrFromXML(GeneratorContext.CODETYPETAG));
                 parameters.EnableDataBinding =
                         Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEDATABINDINGTAG));
                 parameters.EnableLasyLoading =
@@ -451,6 +459,8 @@ namespace Xsd2Code.Library
                 parameters.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
 
                 parameters.UseGenericBaseClass = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
+
+                parameters.GenerateShouldSerializeProperty = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATESHOULDSERIALIZETAG));
 
                 parameters.EnableInitializeFields =
                     Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEINITIALIZEFIELDSTAG), true);
@@ -482,7 +492,7 @@ namespace Xsd2Code.Library
                 }
                 parameters.CollectionBase = optionLine.ExtractStrFromXML(GeneratorContext.COLLECTIONBASETAG);
             }
-            
+
             return parameters;
 
             #endregion
@@ -579,15 +589,18 @@ namespace Xsd2Code.Library
                                                           GeneratorContext.AUTOMATICPROPERTIESTAG,
                                                           this.AutomaticProperties.ToString()));
 
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(
+                                              GeneratorContext.GENERATESHOULDSERIALIZETAG,
+                                              this.GenerateShouldSerializeProperty.ToString()));
+
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DISABLEDEBUGTAG, this.DisableDebug.ToString()));
 
             var customUsingsStr = new StringBuilder();
             if (this.CustomUsings != null)
             {
-                foreach (NamespaceParam usingStr in this.CustomUsings)
+                foreach (NamespaceParam usingStr in this.CustomUsings.Where(usingStr => usingStr.NameSpace.Length > 0))
                 {
-                    if (usingStr.NameSpace.Length > 0)
-                        customUsingsStr.Append(usingStr.NameSpace + ";");
+                    customUsingsStr.Append(usingStr.NameSpace + ";");
                 }
 
                 // remove last ";"
@@ -728,8 +741,8 @@ namespace Xsd2Code.Library
                 throw new FileNotFoundException(string.Format("File containing Generator Parameters was not found {0}", filePath), filePath);
             }
 
-            StringBuilder options = new StringBuilder();
-            using (StreamReader r = new StreamReader(filePath))
+            var options = new StringBuilder();
+            using (var r = new StreamReader(filePath))
             {
                 // Loop over each line in file
                 bool appendLine = false;
