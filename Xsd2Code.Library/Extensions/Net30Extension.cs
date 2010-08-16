@@ -165,7 +165,7 @@ namespace Xsd2Code.Library.Extensions
                     if (!this.IsComplexType(prop.Type, ns))
                     {
                         // Exclude collection type
-                        if (collectionTypesFields.IndexOf(prop.Name) == -1)
+                        if (CollectionTypesFields.IndexOf(prop.Name) == -1)
                         {
                             // Get private fieldName
                             var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;

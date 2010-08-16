@@ -178,13 +178,15 @@ namespace Xsd2Code.Library
             GeneratorContext.GeneratorParams.EnableSummaryComment = enableSummaryComment;
             GeneratorContext.GeneratorParams.CustomUsings = customUsings;
             GeneratorContext.GeneratorParams.CollectionBase = collectionBase;
-            GeneratorContext.GeneratorParams.IncludeSerializeMethod = includeSerializeMethod;
+
             GeneratorContext.GeneratorParams.GenerateCloneMethod = implementCloneMethod;
             GeneratorContext.GeneratorParams.TargetFramework = targetFramework;
-            GeneratorContext.GeneratorParams.SerializeMethodName = serializeMethodName;
-            GeneratorContext.GeneratorParams.DeserializeMethodName = deserializeMethodName;
-            GeneratorContext.GeneratorParams.SaveToFileMethodName = saveToFileMethodName;
-            GeneratorContext.GeneratorParams.LoadFromFileMethodName = loadFromFileMethodName;
+            
+            GeneratorContext.GeneratorParams.Serialization.Enabled = includeSerializeMethod;
+            GeneratorContext.GeneratorParams.Serialization.SerializeMethodName = serializeMethodName;
+            GeneratorContext.GeneratorParams.Serialization.DeserializeMethodName = deserializeMethodName;
+            GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName = saveToFileMethodName;
+            GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName = loadFromFileMethodName;
             GeneratorContext.GeneratorParams.DisableDebug = disableDebug;
             this.providerField = provider;
 
@@ -361,7 +363,7 @@ namespace Xsd2Code.Library
                     using (TextReader streamReader = new StreamReader(outputFilePath + ".tmp"))
                     {
                         string line;
-                        
+
                         //DCM TODO Will refactor this to Not perform this last loop after verification that it works.
                         while ((line = streamReader.ReadLine()) != null)
                         {

@@ -61,6 +61,68 @@ namespace Xsd2Code.Library.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to         #region  Fields
+        ///        private bool isDeserializingField;
+        ///        private ObjectState originalobjectStateField = ObjectState.Added;
+        ///        private bool isInitilizedField = false;
+        ///        private ObservableCollection&lt;PropertyValueState&gt; tackingChangesFields = new ObservableCollection&lt;PropertyValueState&gt;();
+        ///        private Delegate collectionChangedDelegateField = null;
+        ///
+        ///        private bool changeTrackingEnabledField;
+        ///        private readonly object objectTrackingField;
+        ///
+        ///        private P [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ObjectChangeTracker_cs {
+            get {
+                return ResourceManager.GetString("ObjectChangeTracker_cs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to         public ObjectState NewState { get; set; }.
+        /// </summary>
+        internal static string ObjectStateChangingEventArgs_cs {
+            get {
+                return ResourceManager.GetString("ObjectStateChangingEventArgs_cs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to         public string PropertyName { get; set; }
+        ///        public object OriginalValue { get; set; }
+        ///        public object CurrentValue { get; set; }
+        ///        public ObjectState State { get; set; }.
+        /// </summary>
+        internal static string PropertyValueState_cs {
+            get {
+                return ResourceManager.GetString("PropertyValueState_cs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to         /// &lt;summary&gt;
+        ///        /// Name of property
+        ///        /// &lt;/summary&gt;
+        ///        private string propertyNameField;
+        ///
+        ///        /// &lt;summary&gt;
+        ///        /// Occurs when [trackable collection changed].
+        ///        /// &lt;/summary&gt;
+        ///        public virtual event NotifyTrackableCollectionChangedEventHandler TrackableCollectionChanged;
+        ///
+        ///        /// &lt;summary&gt;
+        ///        /// Initializes a new instance of the &lt;see cref=&quot;TrackableCollection&amp;lt;T&amp;gt;&quot;/&gt; class.
+        ///        /// &lt;/summary&gt;
+        ///        /// &lt;param name=&quot;propertyName [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string TrackableCollection_cs {
+            get {
+                return ResourceManager.GetString("TrackableCollection_cs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &quot;Code provider for language {0} is not supported&quot;.
         /// </summary>
         internal static string UnsupportedLanguageCodeDomProvider {

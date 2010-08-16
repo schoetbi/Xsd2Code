@@ -25,6 +25,13 @@ namespace Xsd2Code.Addin
 
         public string OutputFile { get; set; }
 
+        public bool OpenAfterGeneration
+        {
+            get
+            {
+                return chkOpenAfterGenerate.Checked;   
+            }
+        }      
 
         #endregion
 
@@ -49,7 +56,7 @@ namespace Xsd2Code.Addin
         /// <param name="languageIdentifier">The language identifier.</param>
         /// <param name="defaultNamespace">The default namespace.</param>
         public void Init(string xsdFilePath, string languageIdentifier, string defaultNamespace, TargetFramework framework)
-        {
+        {            
             string outputFile;
             this.generatorParams = GeneratorParams.LoadFromFile(xsdFilePath, out outputFile);
 

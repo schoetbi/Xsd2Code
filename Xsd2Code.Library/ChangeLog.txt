@@ -57,3 +57,7 @@
 				 is the prior behavior.
 				 
 				 Added default defaults.xsd2code
+2010-08-16, PC:  Added tracking changes for c#. Use CopleTemplate at this time. Will be convert in CodeDom in futur version.
+			     Apply path of Feb 26 at 12:33 PM (support for IList collection type). (tmanthey).
+				 Apply patch Feb 26 at 2:30 PM Adds "EnableVirtualProperties" behavior for use of generated classes with NHibernate. (tmanthey).
+				 Apply Jul 15 at 11:27 AM (Obalix).

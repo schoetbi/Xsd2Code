@@ -122,6 +122,7 @@ namespace Xsd2Code.SetupLibrary
                     File.Copy(sourceFile, targetFile, true);
                     savedState.Add(savedStateVs2010Key, targetFile);
                 }
+
             }
             catch (Exception ex)
             {
@@ -210,6 +211,23 @@ namespace Xsd2Code.SetupLibrary
                 return val.ToString();
             }
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Write string value in registery
+        /// </summary>
+        /// <param name="rootKey">Registery root key</param>
+        /// <param name="keyName">Registery key</param>
+        /// <param name="value">string value</param>
+        public static void SetRegisteryValue(string rootKey, string keyName, string value)
+        {
+            var result = string.Empty;
+            var hklm = Registry.LocalMachine;
+            hklm = hklm.CreateSubKey(rootKey);
+            if (hklm != null)
+            {
+                hklm.SetValue(keyName, value);
+            }
         }
     }
 }

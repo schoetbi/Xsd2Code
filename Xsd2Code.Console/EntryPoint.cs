@@ -37,7 +37,7 @@ namespace Xsd2Code
 
             // Create new instance of GeneratorParams, which contains all generation parameters
             var xsdFilePath = args[0];
-            var generatorParams = new GeneratorParams {InputFilePath = xsdFilePath};
+            var generatorParams = new GeneratorParams { InputFilePath = xsdFilePath };
 
             // When only the XSD file name is specified, 
             // try to locate generated Designer file and load output parameters from the file header
@@ -71,7 +71,7 @@ namespace Xsd2Code
             {
                 switch (args[i].Trim().ToLower())
                 {
-                    
+
                     case "/n":
                     case "/ns":
                     case "/namespace":
@@ -130,10 +130,10 @@ namespace Xsd2Code
                         {
                             //generatorParams.CustomUsingsString = args[i + 1];
 
-                            foreach(string item in args[i+1].Split(','))
+                            foreach (string item in args[i + 1].Split(','))
                             {
                                 generatorParams.CustomUsings.Add(new NamespaceParam { NameSpace = item });
-                            }                            
+                            }
 
                             i++;
                         }
@@ -143,7 +143,7 @@ namespace Xsd2Code
                     case "/lfm":
                         if (i < args.Length - 1)
                         {
-                            generatorParams.LoadFromFileMethodName = args[i + 1];
+                            generatorParams.Serialization.LoadFromFileMethodName = args[i + 1];
                             i++;
                         }
                         break;
@@ -151,7 +151,7 @@ namespace Xsd2Code
                     case "/sm":
                         if (i < args.Length - 1)
                         {
-                            generatorParams.SerializeMethodName = args[i + 1];
+                            generatorParams.Serialization.SerializeMethodName = args[i + 1];
                             i++;
                         }
                         break;
@@ -160,7 +160,7 @@ namespace Xsd2Code
                     case "/sfm":
                         if (i < args.Length - 1)
                         {
-                            generatorParams.SaveToFileMethodName = args[i + 1];
+                            generatorParams.Serialization.SaveToFileMethodName = args[i + 1];
                             i++;
                         }
                         break;
@@ -184,7 +184,7 @@ namespace Xsd2Code
                         {
                             var nsList = args[i + 1].Split(',');
                             foreach (var ns in nsList)
-                                generatorParams.CustomUsings.Add(new NamespaceParam {NameSpace = ns});
+                                generatorParams.CustomUsings.Add(new NamespaceParam { NameSpace = ns });
                             i++;
                         }
                         break;
@@ -239,15 +239,20 @@ namespace Xsd2Code
                     case "/eit-":
                         generatorParams.ExcludeIncludedTypes = false;
                         break;
-
                     case "/gbc":
                     case "/gbc+":
-                        generatorParams.UseGenericBaseClass = true;
+                        generatorParams.GenericBaseClass.Enabled = true;
                         break;
                     case "/gbc-":
-                        generatorParams.UseGenericBaseClass = false;
+                        generatorParams.GenericBaseClass.Enabled = false;
                         break;
-
+                    case "/ggbc":
+                    case "/ggbc+":
+                        generatorParams.GenericBaseClass.GenerateBaseClass = true;
+                        break;
+                    case "/ggbc-":
+                        generatorParams.GenericBaseClass.GenerateBaseClass = false;
+                        break;
                     case "/sc":
                     case "/sc+":
                         generatorParams.EnableSummaryComment = true;
@@ -259,10 +264,10 @@ namespace Xsd2Code
 
                     case "/xa":
                     case "/xa+":
-                        generatorParams.GenerateXMLAttributes = true;
+                        generatorParams.Serialization.GenerateXMLAttributes = true;
                         break;
                     case "/xa-":
-                        generatorParams.GenerateXMLAttributes = false;
+                        generatorParams.Serialization.GenerateXMLAttributes = false;
                         break;
 
                     case "/cl":
@@ -281,6 +286,24 @@ namespace Xsd2Code
                         generatorParams.HidePrivateFieldInIde = false;
                         break;
 
+                    case "/tc":
+                    case "/tc+":
+                        generatorParams.TrackingChanges.Enabled = true;
+                        break;
+
+                    case "/tc-":
+                        generatorParams.TrackingChanges.Enabled = false;
+                        break;
+
+                    case "/tcc":
+                    case "/tcc+":
+                        generatorParams.TrackingChanges.GenerateTrackingClasses = true;
+                        break;
+
+                    case "/tcc-":
+                        generatorParams.TrackingChanges.GenerateTrackingClasses = false;
+                        break;
+
                     case "/ssp":
                     case "/ssp+":
                         generatorParams.GenerateShouldSerializeProperty = true;
@@ -293,11 +316,11 @@ namespace Xsd2Code
                     case "/s+":
                     case "/is":
                     case "/is+":
-                        generatorParams.IncludeSerializeMethod = true;
+                        generatorParams.Serialization.Enabled = true;
                         break;
                     case "/s-":
                     case "/is-":
-                        generatorParams.IncludeSerializeMethod = false;
+                        generatorParams.Serialization.Enabled = false;
                         break;
 
                     case "/lic":

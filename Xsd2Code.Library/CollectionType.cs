@@ -26,6 +26,11 @@ namespace Xsd2Code.Library
         List,
 
         /// <summary>
+        /// Generic IList
+        /// </summary>
+        IList,
+
+        /// <summary>
         /// Provides a generic collection that supports data binding. Especially in WinForms
         /// </summary>
         BindingList,

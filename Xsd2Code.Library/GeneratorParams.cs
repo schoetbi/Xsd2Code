@@ -3,12 +3,137 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Text;
 using Xsd2Code.Library.Helpers;
 
 namespace Xsd2Code.Library
 {
+    public class GeneratorParamsBase : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        public virtual void OnPropertyChanged(string info)
+        {
+            PropertyChangedEventHandler handler = this.PropertyChanged;
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(info));
+            }
+        }
+    }
+
+    [Serializable]
+    public class SerializeParams : GeneratorParamsBase
+    {
+        /// <summary>
+        /// Gets or sets a value indicating the name of Serialize method.
+        /// </summary>
+        [Category("Serialize"), DefaultValue("Serialize"), Description("The name of Serialize method.")]
+        public string SerializeMethodName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of Deserialize method.
+        /// </summary>
+        [Category("Serialize"), DefaultValue("Deserialize"), Description("The name of deserialize method.")]
+        public string DeserializeMethodName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of Serialize method.
+        /// </summary>
+        [Category("Serialize"), DefaultValue("SaveToFile"), Description("The name of save to xml file method.")]
+        public string SaveToFileMethodName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of SaveToFile method.
+        /// </summary>
+        [Category("Serialize"), DefaultValue("LoadFromFile"), Description("The name of load from xml file method.")]
+        public string LoadFromFileMethodName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether serialize/deserialize method support
+        /// </summary>
+        [Category("Serialize")]
+        [DefaultValue(false)]
+        [Description("Indicating whether serialize/deserialize method nust be generate.")]
+        public bool Enabled { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("(Serialize methods={0})", Enabled);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
+        /// </summary>
+        [Category("Serialize")]
+        [DefaultValue(false)]
+        [Description("Indicating whether if generate .NET 2.0 serialization attributes. If false, serilisation will use propertyName")]
+        public bool GenerateXMLAttributes { get; set; }
+    }
+
+
+    [Serializable]
+    public class TrackingChangesParams : GeneratorParamsBase
+    {
+        private bool enabledField;
+
+        [DefaultValue(false)]
+        public bool Enabled
+        {
+            get { return enabledField; }
+            set
+            {
+                if (!enabledField.Equals(value))
+                {
+                    enabledField = value;
+                    OnPropertyChanged("Enabled");
+                }
+            }
+        }
+
+        [DefaultValue(true), Description("If true, generate tracking changes classes inside [SchemaName].designed.cs file.")]
+        public bool GenerateTrackingClasses { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("(Tracking changes={0})", enabledField);
+        }
+    }
+
+    public class GenericBaseClassParames : GeneratorParamsBase
+    {
+        private bool enabledField;
+
+        [Category("Behavior"), DefaultValue(false), Description("Use generic patial base class for all methods")]
+        public bool Enabled
+        {
+            get { return enabledField; }
+            set
+            {
+                if (!enabledField.Equals(value))
+                {
+                    enabledField = value;
+                    OnPropertyChanged("Enabled");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of Serialize method.
+        /// </summary>
+        [DefaultValue("EntityBase"), Description("Name of generic patial base class")]
+        public string BaseClassName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of Serialize method.
+        /// </summary>
+        [DefaultValue("true"), Description("Generate base class code inside [ShemaName].designer.cs file")]
+        public bool GenerateBaseClass { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("(Use generic base class={0})", enabledField);
+        }
+    }
     /// <summary>
     /// Represents all generation parameters
     /// </summary>
@@ -46,9 +171,29 @@ namespace Xsd2Code.Library
         private List<NamespaceParam> customUsingsField = new List<NamespaceParam>();
 
         /// <summary>
+        /// Indicate if use generic base class for isolate all methods
+        /// </summary>
+        private GenericBaseClassParames genericBaseClassField;
+
+        /// <summary>
+        /// Indicate if use tracking change algrithm.
+        /// </summary>
+        private TrackingChangesParams trackingChangesField;
+
+        /// <summary>
+        /// Serilisation params
+        /// </summary>
+        private SerializeParams serializeFiledField;
+
+        /// <summary>
         /// Indicate if use automatic properties
         /// </summary>
-        private bool automaticPropertiesField = false;
+        private bool automaticPropertiesField;
+
+        /// <summary>
+        /// Indicate if implement INotifyPropertyChanged
+        /// </summary>
+        private bool enableDataBindingField;
         #endregion
 
         /// <summary>
@@ -56,24 +201,37 @@ namespace Xsd2Code.Library
         /// </summary>
         private TargetFramework targetFrameworkField = default(TargetFramework);
 
-        /// <summary>
-        /// Indicate id databinding is enable
-        /// </summary>
-        private bool enableDataBindingField = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GeneratorParams"/> class.
         /// </summary>
         public GeneratorParams()
         {
-            this.LoadFromFileMethodName = "LoadFromFile";
-            this.SaveToFileMethodName = "SaveToFile";
-            this.DeserializeMethodName = "Deserialize";
-            this.SerializeMethodName = "Serialize";
-            this.BaseClassName = "EntityBase";
-            this.UseGenericBaseClass = false;
+            this.Serialization.LoadFromFileMethodName = "LoadFromFile";
+            this.Serialization.SaveToFileMethodName = "SaveToFile";
+            this.Serialization.DeserializeMethodName = "Deserialize";
+            this.Serialization.SerializeMethodName = "Serialize";
+            this.GenericBaseClass.BaseClassName = "EntityBase";
+            this.GenericBaseClass.Enabled = false;
             this.EnableInitializeFields = true;
             this.ExcludeIncludedTypes = false;
+            this.TrackingChanges.PropertyChanged += TrackingChangesPropertyChanged;
+        }
+
+        /// <summary>
+        /// Trackings the changes property changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="System.ComponentModel.PropertyChangedEventArgs"/> instance containing the event data.</param>
+        void TrackingChangesPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Enabled")
+            {
+                if (this.TrackingChanges.Enabled)
+                {
+                    this.EnableDataBinding = true;
+                }
+            }
         }
 
         /// <summary>
@@ -126,7 +284,7 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Gets or sets custom usings
         /// </summary>
-        [Category("Collection")]
+        [Category("Code")]
         [Description("list of custom using for CustomCollection")]
         public List<NamespaceParam> CustomUsings
         {
@@ -161,29 +319,30 @@ namespace Xsd2Code.Library
                 {
                     this.AutomaticProperties = false;
                 }
+                else
+                {
+                    this.TrackingChanges.Enabled = false;
+                }
             }
         }
 
         /// <summary>
         /// Gets or sets a value indicating whether if implement INotifyPropertyChanged
         /// </summary>
-        [Category("Behavior")]
+        [Category("Property")]
         [DefaultValue(false)]
         [Description("Use lasy pattern when possible.")]
         public bool EnableLasyLoading { get; set; }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether serialize/deserialize method support
-        /// </summary>
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("Indicating whether serialize/deserialize method nust be generate.")]
-        public bool IncludeSerializeMethod { get; set; }
+        [Category("Property")]
+        [DefaultValue(true)]
+        [Description("Enable/Disable virtual properties. Use with NHibernate.")]
+        public bool EnableVirtualProperties { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether serialize/deserialize method support
         /// </summary>
-        [Category("Behavior")]
+        [Category("Property")]
         [DefaultValue(false)]
         [Description("Generate automatic properties when possible. (Work only for csharp with target framework 3.0 or 3.5 and EnableDataBinding disable)")]
         public bool AutomaticProperties
@@ -199,13 +358,13 @@ namespace Xsd2Code.Library
                 {
                     if (this.targetFrameworkField != TargetFramework.Net20)
                     {
-                        this.automaticPropertiesField = value;
+                        this.automaticPropertiesField = true;
                         this.EnableDataBinding = false;
                     }
                 }
                 else
                 {
-                    this.automaticPropertiesField = value;
+                    this.automaticPropertiesField = false;
                 }
             }
         }
@@ -221,7 +380,7 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Gets or sets a value indicating whether serialize/deserialize method support
         /// </summary>
-        [Category("Behavior")]
+        [Category("Code")]
         [DefaultValue(Library.TargetFramework.Net20)]
         [Description("Generated code base")]
         public TargetFramework TargetFramework
@@ -263,14 +422,6 @@ namespace Xsd2Code.Library
         public bool GenerateShouldSerializeProperty { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
-        /// </summary>
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("Indicating whether if generate .NET 2.0 serialization attributes.")]
-        public bool GenerateXMLAttributes { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether [disable debug].
         /// </summary>
         /// <value><c>true</c> if [disable debug]; otherwise, <c>false</c>.</value>
@@ -291,45 +442,79 @@ namespace Xsd2Code.Library
         /// Gets or sets a value indicating whether if generate summary documentation
         /// </summary>
         [Category("Behavior")]
+        [Description("Track changes.")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public TrackingChangesParams TrackingChanges
+        {
+            get
+            {
+                if (trackingChangesField == null)
+                {
+                    trackingChangesField = new TrackingChangesParams();
+                }
+                return trackingChangesField;
+            }
+
+            set
+            {
+                trackingChangesField = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate summary documentation
+        /// </summary>
+        [Category("Behavior")]
+        [Description("XML Serilisation configuration.")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SerializeParams Serialization
+        {
+            get
+            {
+                if (serializeFiledField == null)
+                {
+                    serializeFiledField = new SerializeParams();
+                }
+                return serializeFiledField;
+            }
+
+            set
+            {
+                serializeFiledField = value;
+            }
+        }
+
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate summary documentation
+        /// </summary>
+        [Category("Behavior")]
+        [Description("Generic base class configuration.")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public GenericBaseClassParames GenericBaseClass
+        {
+            get
+            {
+                if (genericBaseClassField == null)
+                {
+                    genericBaseClassField = new GenericBaseClassParames();
+                }
+                return genericBaseClassField;
+            }
+
+            set
+            {
+                genericBaseClassField = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate summary documentation
+        /// </summary>
+        [Category("Behavior")]
         [DefaultValue(false)]
         [Description("Generate WCF data contract attributes")]
         public bool GenerateDataContracts { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating the name of Serialize method.
-        /// </summary>
-        [Category("Behavior"), DefaultValue(false), Description("Use generic patial base class for all methods")]
-        public bool UseGenericBaseClass { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating the name of Serialize method.
-        /// </summary>
-        [Category("Serialize"), DefaultValue("EntityBase"), Description("Name of generic patial base class")]
-        public string BaseClassName { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating the name of Serialize method.
-        /// </summary>
-        [Category("Serialize"), DefaultValue("Serialize"), Description("The name of Serialize method.")]
-        public string SerializeMethodName { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating the name of Deserialize method.
-        /// </summary>
-        [Category("Serialize"), DefaultValue("Deserialize"), Description("The name of deserialize method.")]
-        public string DeserializeMethodName { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating the name of Serialize method.
-        /// </summary>
-        [Category("Serialize"), DefaultValue("SaveToFile"), Description("The name of save to xml file method.")]
-        public string SaveToFileMethodName { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating the name of SaveToFile method.
-        /// </summary>
-        [Category("Serialize"), DefaultValue("LoadFromFile"), Description("The name of load from xml file method.")]
-        public string LoadFromFileMethodName { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether accessing a property will initialize it
@@ -398,7 +583,6 @@ namespace Xsd2Code.Library
                     if (File.Exists(defaultsConfigPath))
                     {
                         configFile = defaultsConfigPath;
-                        //outputFile = Utility.GetOutputFilePath(xsdFilePath, language);
                     }
                 }
             }
@@ -412,7 +596,7 @@ namespace Xsd2Code.Library
             #region Try to get Last options
 
             //DCM Created Routine to Search for Auto-Generated Paramters
-            string optionLine = ExtractAutoGeneratedParams(configFile);
+            var optionLine = ExtractAutoGeneratedParams(configFile);
 
             //DCM Fall back to old method because of some invalid Tag names
             if (optionLine == null)
@@ -430,57 +614,42 @@ namespace Xsd2Code.Library
             if (optionLine != null)
             {
                 parameters.NameSpace = optionLine.ExtractStrFromXML(GeneratorContext.NAMESPACETAG);
-                parameters.CollectionObjectType =
-                        Utility.ToEnum<CollectionType>(
-                                optionLine.ExtractStrFromXML(GeneratorContext.COLLECTIONTAG));
-                parameters.Language =
-                        Utility.ToEnum<GenerationLanguage>(optionLine.ExtractStrFromXML(GeneratorContext.CODETYPETAG));
-                parameters.EnableDataBinding =
-                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEDATABINDINGTAG));
-                parameters.EnableLasyLoading =
-                         Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELASYLOADINGTAG));
-                parameters.HidePrivateFieldInIde =
-                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.HIDEPRIVATEFIELDTAG));
-                parameters.EnableSummaryComment =
-                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLESUMMARYCOMMENTTAG));
-                parameters.IncludeSerializeMethod =
-                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.INCLUDESERIALIZEMETHODTAG));
-                parameters.GenerateCloneMethod =
-                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATECLONEMETHODTAG));
-                parameters.GenerateDataContracts =
-                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEDATACONTRACTSTAG));
-                parameters.TargetFramework =
-                        Utility.ToEnum<TargetFramework>(optionLine.ExtractStrFromXML(GeneratorContext.CODEBASETAG));
-                parameters.DisableDebug =
-                        Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.DISABLEDEBUGTAG));
-
-                parameters.GenerateXMLAttributes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEXMLATTRIBUTESTAG));
-
+                parameters.CollectionObjectType = Utility.ToEnum<CollectionType>(optionLine.ExtractStrFromXML(GeneratorContext.COLLECTIONTAG));
+                parameters.Language = Utility.ToEnum<GenerationLanguage>(optionLine.ExtractStrFromXML(GeneratorContext.CODETYPETAG));
+                parameters.EnableDataBinding = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEDATABINDINGTAG));
+                parameters.EnableLasyLoading = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELASYLOADINGTAG));
+                parameters.HidePrivateFieldInIde = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.HIDEPRIVATEFIELDTAG));
+                parameters.EnableSummaryComment = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLESUMMARYCOMMENTTAG));
+                parameters.TrackingChanges.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLETRACKINGCHANGESTAG));
+                parameters.TrackingChanges.GenerateTrackingClasses = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATETRACKINGCLASSESTAG));
+                parameters.Serialization.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.INCLUDESERIALIZEMETHODTAG));
+                parameters.GenerateCloneMethod = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATECLONEMETHODTAG));
+                parameters.GenerateDataContracts = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEDATACONTRACTSTAG));
+                parameters.TargetFramework = Utility.ToEnum<TargetFramework>(optionLine.ExtractStrFromXML(GeneratorContext.CODEBASETAG));
+                parameters.DisableDebug = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.DISABLEDEBUGTAG));
+                parameters.Serialization.GenerateXMLAttributes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEXMLATTRIBUTESTAG));
                 parameters.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
-
-                parameters.UseGenericBaseClass = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
-
+                parameters.EnableVirtualProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG));
+                parameters.GenericBaseClass.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
+                parameters.GenericBaseClass.GenerateBaseClass = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEBASECLASSTAG));
                 parameters.GenerateShouldSerializeProperty = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATESHOULDSERIALIZETAG));
-
-                parameters.EnableInitializeFields =
-                    Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEINITIALIZEFIELDSTAG), true);
-
+                parameters.EnableInitializeFields = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEINITIALIZEFIELDSTAG), true);
                 parameters.ExcludeIncludedTypes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG));
 
                 string str = optionLine.ExtractStrFromXML(GeneratorContext.SERIALIZEMETHODNAMETAG);
-                parameters.SerializeMethodName = str.Length > 0 ? str : "Serialize";
+                parameters.Serialization.SerializeMethodName = str.Length > 0 ? str : "Serialize";
 
                 str = optionLine.ExtractStrFromXML(GeneratorContext.DESERIALIZEMETHODNAMETAG);
-                parameters.DeserializeMethodName = str.Length > 0 ? str : "Deserialize";
+                parameters.Serialization.DeserializeMethodName = str.Length > 0 ? str : "Deserialize";
 
                 str = optionLine.ExtractStrFromXML(GeneratorContext.SAVETOFILEMETHODNAMETAG);
-                parameters.SaveToFileMethodName = str.Length > 0 ? str : "SaveToFile";
+                parameters.Serialization.SaveToFileMethodName = str.Length > 0 ? str : "SaveToFile";
 
                 str = optionLine.ExtractStrFromXML(GeneratorContext.LOADFROMFILEMETHODNAMETAG);
-                parameters.LoadFromFileMethodName = str.Length > 0 ? str : "LoadFromFile";
+                parameters.Serialization.LoadFromFileMethodName = str.Length > 0 ? str : "LoadFromFile";
 
                 str = optionLine.ExtractStrFromXML(GeneratorContext.BASECLASSNAMETAG);
-                parameters.BaseClassName = str.Length > 0 ? str : "EntityBase";
+                parameters.GenericBaseClass.BaseClassName = str.Length > 0 ? str : "EntityBase";
 
                 // TODO:get custom using
                 string customUsingString = optionLine.ExtractStrFromXML(GeneratorContext.CUSTOMUSINGSTAG);
@@ -519,80 +688,32 @@ namespace Xsd2Code.Library
             var optionsLine = new StringBuilder();
 
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.NAMESPACETAG, this.NameSpace));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.COLLECTIONTAG,
-                                                          this.CollectionObjectType.ToString()));
-
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.COLLECTIONTAG, this.CollectionObjectType.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.CODETYPETAG, this.Language.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.ENABLEDATABINDINGTAG,
-                                                          this.EnableDataBinding.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.ENABLELASYLOADINGTAG,
-                                                          this.EnableLasyLoading.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.HIDEPRIVATEFIELDTAG,
-                                                          this.HidePrivateFieldInIde.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.ENABLESUMMARYCOMMENTTAG,
-                                                          this.EnableSummaryComment.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEDATABINDINGTAG, this.EnableDataBinding.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLELASYLOADINGTAG, this.EnableLasyLoading.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLETRACKINGCHANGESTAG, this.TrackingChanges.Enabled.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATETRACKINGCLASSESTAG, this.TrackingChanges.GenerateTrackingClasses.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.HIDEPRIVATEFIELDTAG, this.HidePrivateFieldInIde.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLESUMMARYCOMMENTTAG, this.EnableSummaryComment.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG, this.EnableVirtualProperties.ToString()));
 
             if (!string.IsNullOrEmpty(this.CollectionBase))
                 optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.COLLECTIONBASETAG, this.CollectionBase));
 
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.INCLUDESERIALIZEMETHODTAG,
-                                                          this.IncludeSerializeMethod.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.USEGENERICBASECLASSTAG,
-                                                          this.UseGenericBaseClass.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.GENERATECLONEMETHODTAG,
-                                                          this.GenerateCloneMethod.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.GENERATEDATACONTRACTSTAG,
-                                                          this.GenerateDataContracts.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.CODEBASETAG,
-                                                          this.TargetFramework.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.SERIALIZEMETHODNAMETAG,
-                                                          this.SerializeMethodName));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.DESERIALIZEMETHODNAMETAG,
-                                                          this.DeserializeMethodName));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.SAVETOFILEMETHODNAMETAG,
-                                                          this.SaveToFileMethodName));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.LOADFROMFILEMETHODNAMETAG,
-                                                          this.LoadFromFileMethodName));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.GENERATEXMLATTRIBUTESTAG,
-                                                          this.GenerateXMLAttributes.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                                          GeneratorContext.AUTOMATICPROPERTIESTAG,
-                                                          this.AutomaticProperties.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(
-                                              GeneratorContext.GENERATESHOULDSERIALIZETAG,
-                                              this.GenerateShouldSerializeProperty.ToString()));
-
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.INCLUDESERIALIZEMETHODTAG, this.Serialization.Enabled.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.USEGENERICBASECLASSTAG, this.GenericBaseClass.Enabled.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEBASECLASSTAG, this.GenericBaseClass.GenerateBaseClass.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATECLONEMETHODTAG, this.GenerateCloneMethod.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEDATACONTRACTSTAG, this.GenerateDataContracts.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.CODEBASETAG, this.TargetFramework.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.SERIALIZEMETHODNAMETAG, this.Serialization.SerializeMethodName));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DESERIALIZEMETHODNAMETAG, this.Serialization.DeserializeMethodName));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.SAVETOFILEMETHODNAMETAG, this.Serialization.SaveToFileMethodName));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.LOADFROMFILEMETHODNAMETAG, this.Serialization.LoadFromFileMethodName));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEXMLATTRIBUTESTAG, this.Serialization.GenerateXMLAttributes.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.AUTOMATICPROPERTIESTAG, this.AutomaticProperties.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATESHOULDSERIALIZETAG, this.GenerateShouldSerializeProperty.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DISABLEDEBUGTAG, this.DisableDebug.ToString()));
 
             var customUsingsStr = new StringBuilder();
@@ -615,12 +736,8 @@ namespace Xsd2Code.Library
                                                               customUsingsStr.ToString()));
             }
 
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG,
-                                                          this.ExcludeIncludedTypes.ToString()));
-
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEINITIALIZEFIELDSTAG,
-                                                          this.EnableInitializeFields.ToString()));
-
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG, this.ExcludeIncludedTypes.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEINITIALIZEFIELDSTAG, this.EnableInitializeFields.ToString()));
 
             return optionsLine.ToString();
         }
@@ -657,50 +774,50 @@ namespace Xsd2Code.Library
                 }
             }
 
-            if (this.IncludeSerializeMethod)
+            if (this.Serialization.Enabled)
             {
-                if (string.IsNullOrEmpty(this.SerializeMethodName))
+                if (string.IsNullOrEmpty(this.Serialization.SerializeMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the Serialize method name.");
                 }
 
-                if (!IsValidMethodName(this.SerializeMethodName))
+                if (!IsValidMethodName(this.Serialization.SerializeMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, string.Format("Serialize method name {0} is invalid.",
-                                                  this.SerializeMethodName));
+                                                  this.Serialization.SerializeMethodName));
                 }
 
-                if (string.IsNullOrEmpty(this.DeserializeMethodName))
+                if (string.IsNullOrEmpty(this.Serialization.DeserializeMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the Deserialize method name.");
                 }
 
-                if (!IsValidMethodName(this.DeserializeMethodName))
+                if (!IsValidMethodName(this.Serialization.DeserializeMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, string.Format("Deserialize method name {0} is invalid.",
-                                                  this.DeserializeMethodName));
+                                                  this.Serialization.DeserializeMethodName));
                 }
 
-                if (string.IsNullOrEmpty(this.SaveToFileMethodName))
+                if (string.IsNullOrEmpty(this.Serialization.SaveToFileMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the save to xml file method name.");
                 }
 
-                if (!IsValidMethodName(this.SaveToFileMethodName))
+                if (!IsValidMethodName(this.Serialization.SaveToFileMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, string.Format("Save to file method name {0} is invalid.",
-                                                  this.SaveToFileMethodName));
+                                                  this.Serialization.SaveToFileMethodName));
                 }
 
-                if (string.IsNullOrEmpty(this.LoadFromFileMethodName))
+                if (string.IsNullOrEmpty(this.Serialization.LoadFromFileMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the load from xml file method name.");
                 }
 
-                if (!IsValidMethodName(this.LoadFromFileMethodName))
+                if (!IsValidMethodName(this.Serialization.LoadFromFileMethodName))
                 {
                     result.Success = false; result.Messages.Add(MessageType.Error, string.Format("Load from file method name {0} is invalid.",
-                                                  this.LoadFromFileMethodName));
+                                                  this.Serialization.LoadFromFileMethodName));
                 }
             }
 

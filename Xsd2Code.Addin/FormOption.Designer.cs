@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
+            this.chkOpenAfterGenerate = new System.Windows.Forms.CheckBox();
             this.btnSetAsDefault = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnGenerate = new System.Windows.Forms.Button();
@@ -39,6 +40,7 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.chkOpenAfterGenerate);
             this.panel1.Controls.Add(this.btnSetAsDefault);
             this.panel1.Controls.Add(this.btnCancel);
             this.panel1.Controls.Add(this.btnGenerate);
@@ -48,9 +50,19 @@
             this.panel1.Size = new System.Drawing.Size(438, 32);
             this.panel1.TabIndex = 2;
             // 
+            // chkOpenAfterGenerate
+            // 
+            this.chkOpenAfterGenerate.AutoSize = true;
+            this.chkOpenAfterGenerate.Location = new System.Drawing.Point(15, 8);
+            this.chkOpenAfterGenerate.Name = "chkOpenAfterGenerate";
+            this.chkOpenAfterGenerate.Size = new System.Drawing.Size(156, 17);
+            this.chkOpenAfterGenerate.TabIndex = 5;
+            this.chkOpenAfterGenerate.Text = "Open code after generation";
+            this.chkOpenAfterGenerate.UseVisualStyleBackColor = true;
+            // 
             // btnSetAsDefault
             // 
-            this.btnSetAsDefault.Location = new System.Drawing.Point(15, 6);
+            this.btnSetAsDefault.Location = new System.Drawing.Point(193, 3);
             this.btnSetAsDefault.Name = "btnSetAsDefault";
             this.btnSetAsDefault.Size = new System.Drawing.Size(83, 23);
             this.btnSetAsDefault.TabIndex = 4;
@@ -81,6 +93,7 @@
             // 
             // propertyGrid
             // 
+            this.propertyGrid.Font = new System.Drawing.Font("Corbel", 8.25F);
             this.propertyGrid.Location = new System.Drawing.Point(12, 12);
             this.propertyGrid.Name = "propertyGrid";
             this.propertyGrid.Size = new System.Drawing.Size(414, 535);
@@ -113,6 +126,7 @@
             this.Text = "Xsd2Code class generator";
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.FormOption_KeyPress);
             this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -126,6 +140,7 @@
         private System.Windows.Forms.PropertyGrid propertyGrid;
         private System.Windows.Forms.Button btnSetAsDefault;
         private System.Windows.Forms.LinkLabel linkToCodePlex;
+        private System.Windows.Forms.CheckBox chkOpenAfterGenerate;
 
     }
 }

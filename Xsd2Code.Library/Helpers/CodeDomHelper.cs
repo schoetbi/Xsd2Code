@@ -34,6 +34,7 @@ namespace Xsd2Code.Library.Helpers
             codeStatmentColl.Add(new CodeCommentStatement("</summary>", true));
         }
 
+
         /// <summary>
         /// Creates the object.
         /// </summary>
@@ -392,7 +393,7 @@ namespace Xsd2Code.Library.Helpers
         /// </remarks>
         internal static CodeMemberMethod CreatePropertyChangedMethod()
         {
-            const string paramName = "info";
+            const string paramName = "propertyName";
             const string variableName = "handler";
 
             var propertyChangedMethod = new CodeMemberMethod
@@ -402,6 +403,15 @@ namespace Xsd2Code.Library.Helpers
             };
             propertyChangedMethod.Parameters.Add(new CodeParameterDeclarationExpression(
                 new CodeTypeReference(typeof(String)), paramName));
+
+            if (GeneratorContext.GeneratorParams.TrackingChanges.Enabled && GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
+            {
+                propertyChangedMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "value"));
+               // this.ChangeTracker.RecordCurrentValue(info, value);
+                var changeTrackerParams = new CodeExpression[] { new CodeArgumentReferenceExpression(paramName), new CodeArgumentReferenceExpression(("value")) };
+                var changeTrackerInvokeExpression = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "ChangeTracker.RecordCurrentValue"), changeTrackerParams);
+                propertyChangedMethod.Statements.Add(changeTrackerInvokeExpression);
+            }
 
             //Declare temp variable holding the event
             var vardec = new CodeVariableDeclarationStatement(

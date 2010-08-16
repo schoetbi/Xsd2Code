@@ -30,7 +30,7 @@ namespace Xsd2Code.Library.Extensions
         protected override void ImportNamespaces(CodeNamespace code)
         {
             base.ImportNamespaces(code);
-            if (GeneratorContext.GeneratorParams.IncludeSerializeMethod)
+            if (GeneratorContext.GeneratorParams.Serialization.Enabled)
             {
                 code.Imports.Add(new CodeNamespaceImport("System.IO.IsolatedStorage"));
             }
@@ -43,7 +43,7 @@ namespace Xsd2Code.Library.Extensions
         /// <returns>return the codeDom LoadFromFile method</returns>
         protected override CodeMemberMethod GetLoadFromFileMethod(CodeTypeDeclaration type)
         {
-            string typeName = GeneratorContext.GeneratorParams.UseGenericBaseClass ? "T" : type.Name;
+            string typeName = GeneratorContext.GeneratorParams.GenericBaseClass.Enabled ? "T" : type.Name;
 
             // ---------------------------------------------
             // public static T LoadFromFile(string fileName)
@@ -51,7 +51,7 @@ namespace Xsd2Code.Library.Extensions
             var loadFromFileMethod = new CodeMemberMethod
             {
                 Attributes = MemberAttributes.Public | MemberAttributes.Static,
-                Name = GeneratorContext.GeneratorParams.LoadFromFileMethodName
+                Name = GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName
             };
 
             loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
@@ -124,7 +124,7 @@ namespace Xsd2Code.Library.Extensions
 
             var deserializeInvoke =
                 new CodeMethodInvokeExpression(
-                    new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.DeserializeMethodName),
+                    new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.DeserializeMethodName),
                     new CodeExpression[] { fileName });
 
             var rstmts = new CodeMethodReturnStatement(deserializeInvoke);
@@ -155,7 +155,7 @@ namespace Xsd2Code.Library.Extensions
             var saveToFileMethod = new CodeMemberMethod
             {
                 Attributes = MemberAttributes.Public,
-                Name = GeneratorContext.GeneratorParams.SaveToFileMethodName
+                Name = GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName
             };
 
             saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
@@ -214,7 +214,7 @@ namespace Xsd2Code.Library.Extensions
             // string xmlString = Serialize();
             // -------------------------------
             var serializeMethodInvoke = new CodeMethodInvokeExpression(
-                new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.SerializeMethodName));
+                new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.SerializeMethodName));
 
             var xmlString = new CodeVariableDeclarationStatement(
                 new CodeTypeReference(typeof(string)), "xmlString", serializeMethodInvoke);

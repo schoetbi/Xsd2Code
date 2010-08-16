@@ -98,11 +98,12 @@ namespace Xsd2Code.TestUnit
                                               InputFilePath = inputFilePath,
                                               TargetFramework = TargetFramework.Net20,
                                               AutomaticProperties = true,
-                                              IncludeSerializeMethod = false,
-                                              UseGenericBaseClass = false,
                                               OutputFilePath = GetOutputFilePath(inputFilePath)
 
                                           };
+
+                generatorParams.Serialization.Enabled = false;
+                generatorParams.GenericBaseClass.Enabled = false;
 
                 var xsdGen = new GeneratorFacade(generatorParams);
                 var result = xsdGen.Generate();
@@ -142,7 +143,6 @@ namespace Xsd2Code.TestUnit
                 var generatorParams = new GeneratorParams
                                           {
                                               GenerateCloneMethod = true,
-                                              IncludeSerializeMethod = true,
                                               AutomaticProperties = true,
                                               InputFilePath = inputFilePath,
                                               NameSpace = "MyNameSpace",
@@ -151,6 +151,8 @@ namespace Xsd2Code.TestUnit
                                               Language = GenerationLanguage.CSharp,
                                               OutputFilePath = Path.ChangeExtension(inputFilePath, ".TestGenerated.cs")
                                           };
+
+                generatorParams.Serialization.Enabled = true;
                 var xsdGen = new GeneratorFacade(generatorParams);
                 var result = xsdGen.Generate();
 
@@ -191,8 +193,8 @@ namespace Xsd2Code.TestUnit
             {
 
                 var e = new ArrayOfMyElement();
-                var myE = new MyElement {Name = "Name"};
-                myE.AttributeLists.Add(new NameValuePair {Name = "Name", Value = "Value"});
+                var myE = new MyElement { Name = "Name" };
+                myE.AttributeLists.Add(new NameValuePair { Name = "Name", Value = "Value" });
                 e.MyElement.Add(myE);
                 Exception ex;
 
@@ -241,9 +243,11 @@ namespace Xsd2Code.TestUnit
                 generatorParams.EnableDataBinding = true;
                 generatorParams.EnableSummaryComment = true;
                 generatorParams.GenerateDataContracts = false;
-                generatorParams.UseGenericBaseClass = false;
-                generatorParams.GenerateXMLAttributes = true;
-                
+                generatorParams.GenericBaseClass.Enabled = false;
+                generatorParams.Serialization.GenerateXMLAttributes = true;
+                generatorParams.TrackingChanges.Enabled = true;
+                generatorParams.TrackingChanges.GenerateTrackingClasses = true;
+
 
                 var xsdGen = new GeneratorFacade(generatorParams);
                 var result = xsdGen.Generate();
@@ -252,9 +256,9 @@ namespace Xsd2Code.TestUnit
 
                 // Create new dvd collection and save it to file
                 var dvd = new DvdCollection();
-                dvd.Dvds.Add(new dvd {Title = "Matrix"});
+                dvd.Dvds.Add(new dvd { Title = "Matrix" });
                 var newitem = new dvd();
-                newitem.Actor.Add(new Actor {firstname = "James", nationality = "Us"});
+                newitem.Actor.Add(new Actor { firstname = "James", nationality = "Us" });
                 dvd.Dvds.Add(newitem);
                 var originalXml = dvd.Serialize();
                 dvd.SaveToFile(@"c:\temp\dvd.xml");
@@ -291,7 +295,7 @@ namespace Xsd2Code.TestUnit
                 generatorParams.TargetFramework = TargetFramework.Net30;
                 generatorParams.AutomaticProperties = true;
                 generatorParams.GenerateDataContracts = true;
-                generatorParams.GenerateXMLAttributes = true;
+                generatorParams.Serialization.GenerateXMLAttributes = true;
                 generatorParams.OutputFilePath = GetOutputFilePath(inputFilePath);
 
                 var xsdGen = new GeneratorFacade(generatorParams);
@@ -309,7 +313,7 @@ namespace Xsd2Code.TestUnit
                                      };
                 Exception ex;
                 genderRoot.SaveToFile(Path.Combine(OutputFolder, "gender.xml"), out ex);
-                if(ex!=null) throw ex;
+                if (ex != null) throw ex;
 
                 var canCompile = CompileCSFile(generatorParams.OutputFilePath);
                 Assert.IsTrue(canCompile.Success, canCompile.Messages.ToString());
@@ -328,7 +332,7 @@ namespace Xsd2Code.TestUnit
                 generatorParams.TargetFramework = TargetFramework.Net30;
                 generatorParams.AutomaticProperties = true;
                 generatorParams.GenerateDataContracts = true;
-                generatorParams.GenerateXMLAttributes = true;
+                generatorParams.Serialization.GenerateXMLAttributes = true;
                 generatorParams.OutputFilePath = GetOutputFilePath(inputFilePath);
                 generatorParams.EnableDataBinding = true;
                 generatorParams.EnableSummaryComment = true;
@@ -446,7 +450,7 @@ namespace Xsd2Code.TestUnit
                 string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
                 var generatorParams = GetGeneratorParams(inputFilePath);
-                generatorParams.GenerateXMLAttributes = true;
+                generatorParams.Serialization.GenerateXMLAttributes = true;
 
                 generatorParams.TargetFramework = TargetFramework.Net20;
                 generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".xml.cs");
@@ -471,7 +475,7 @@ namespace Xsd2Code.TestUnit
                 GetInputFilePath("Actor.xsd", Resources.Actor);
                 string inputFilePath = GetInputFilePath("dvd.xsd", Resources.dvd);
 
-                var generatorParams = new GeneratorParams {InputFilePath = inputFilePath};
+                var generatorParams = new GeneratorParams { InputFilePath = inputFilePath };
                 GetGeneratorParams(inputFilePath);
                 generatorParams.EnableSummaryComment = true;
                 generatorParams.GenerateDataContracts = false;
@@ -509,10 +513,11 @@ namespace Xsd2Code.TestUnit
                                               GenerateDataContracts = true,
                                               AutomaticProperties = false,
                                               EnableDataBinding = true,
-                                              UseGenericBaseClass = true,
-                                              BaseClassName = "EntityObject",
                                               OutputFilePath = outputFilePath
                                           };
+
+                generatorParams.GenericBaseClass.Enabled = true;
+                generatorParams.GenericBaseClass.BaseClassName = "EntityObject";
 
                 var xsdGen = new GeneratorFacade(generatorParams);
                 var result = xsdGen.Generate();
@@ -533,7 +538,7 @@ namespace Xsd2Code.TestUnit
                 // Get the code namespace for the schema.
                 string inputFilePath = GetInputFilePath("TestAnnotations.xsd", Resources.TestAnnotations);
 
-                var generatorParams = new GeneratorParams {InputFilePath = inputFilePath};
+                var generatorParams = new GeneratorParams { InputFilePath = inputFilePath };
                 GetGeneratorParams(inputFilePath);
 
                 generatorParams.EnableSummaryComment = true;
@@ -630,7 +635,7 @@ namespace Xsd2Code.TestUnit
 
         private static GeneratorParams GetGeneratorParams(string inputFilePath)
         {
-            return new GeneratorParams
+            var generatorParams = new GeneratorParams
                        {
                            InputFilePath = inputFilePath,
                            NameSpace = CodeGenerationNamespace,
@@ -640,10 +645,12 @@ namespace Xsd2Code.TestUnit
                            EnableDataBinding = true,
                            GenerateDataContracts = true,
                            GenerateCloneMethod = true,
-                           IncludeSerializeMethod = true,
                            HidePrivateFieldInIde = true,
                            OutputFilePath = GetOutputFilePath(inputFilePath)
                        };
+
+            generatorParams.Serialization.Enabled = true;
+            return generatorParams;
         }
 
         /// <summary>
@@ -698,7 +705,7 @@ namespace Xsd2Code.TestUnit
                                        WindowStyle = ProcessWindowStyle.Minimized
                                    };
 
-                    using (var process = new Process {StartInfo = info})
+                    using (var process = new Process { StartInfo = info })
                     {
                         process.ErrorDataReceived += (s, e) =>
                                                          {
@@ -713,7 +720,7 @@ namespace Xsd2Code.TestUnit
                         if (!process.Start())
                             throw new ApplicationException("Unablle to start process");
 
-                        var exited = process.WaitForExit((int) TimeSpan.FromSeconds(15).TotalMilliseconds);
+                        var exited = process.WaitForExit((int)TimeSpan.FromSeconds(15).TotalMilliseconds);
                         if (!exited)
                         {
                             result.Success = false;
