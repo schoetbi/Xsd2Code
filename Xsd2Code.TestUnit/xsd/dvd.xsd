@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<!--Created with Liquid XML Studio - FREE Community Edition (http://www.liquid-technologies.com)-->
+<!--Created with Liquid XML Studio Designer Edition (http://www.liquid-technologies.com)-->
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" id="Dvd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:include schemaLocation="Actor.xsd" />
   <xs:element name="DvdCollection">
@@ -12,22 +12,22 @@
   <xs:element name="Actors">
     <xs:complexType>
       <xs:sequence>
-        <xs:element maxOccurs="unbounded" ref="Actor" />
+        <xs:element ref="Actor" maxOccurs="unbounded" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:complexType name="dvd">
     <xs:sequence>
-        <xs:element name="Year" nillable="true" type="xs:int"></xs:element>
-        <xs:element name="Title" nillable="true" default="DefaultTitle" type="xs:string">
+      <xs:element name="Year" type="IntValue" nillable="true" />
+      <xs:element name="Title" type="xs:string" default="DefaultTitle" nillable="true">
         <xs:annotation>
           <xs:documentation>
               Gets or sets the title of dvd.
             </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element default="Action" name="Style" type="Styles" />
-      <xs:element maxOccurs="unbounded" ref="Actor">
+      <xs:element name="Style" type="Styles" default="Action" />
+      <xs:element ref="Actor" maxOccurs="unbounded">
         <xs:annotation>
           <xs:documentation>
               Represent the actor list
@@ -36,6 +36,19 @@
         </xs:annotation>
       </xs:element>
       <xs:element name="PublishYear" type="xs:int" />
+      <xs:element name="Cover">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="IntValue">
+              <xs:attribute name="Systeme" form="unqualified">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string" />
+                </xs:simpleType>
+              </xs:attribute>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
     </xs:sequence>
   </xs:complexType>
   <xs:simpleType name="Styles">
@@ -44,4 +57,12 @@
       <xs:enumeration value="Fiction" />
     </xs:restriction>
   </xs:simpleType>
+  <xs:simpleType name="IntValue">
+    <xs:restriction base="xs:string" />
+  </xs:simpleType>
+  <xs:complexType name="mycttype">
+    <xs:simpleContent>
+      <xs:extension base="xs:double" />
+    </xs:simpleContent>
+  </xs:complexType>
 </xs:schema>

@@ -77,14 +77,19 @@
     <Compile Include="UnitTest.cs" />
     <Compile Include="xsd\ArrayOfArray.Designer.cs" />
     <Compile Include="xsd\CircularClassReference.Designer.cs" />
-    <Compile Include="xsd\dvd.Designer.cs" />
+    <Compile Include="xsd\dvd.designer.cs" />
     <Compile Include="xsd\Gender.cs">
       <DependentUpon>Gender.xsd</DependentUpon>
     </Compile>
     <Compile Include="xsd\Hierarchical.cs">
       <DependentUpon>Hierarchical.xsd</DependentUpon>
     </Compile>
+    <Compile Include="xsd\LazyLoading.designer.cs" />
+    <Compile Include="xsd\mailxml_base.designer.cs" />
+    <Compile Include="xsd\PersonTypeAnnotation.designer.cs" />
     <Compile Include="xsd\ReproSchema.Designer.cs" />
+    <Compile Include="xsd\TestOptionalElement.designer.cs" />
+    <Compile Include="xsd\XMLSchema.designer.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -114,6 +119,27 @@
     <Content Include="xsd\ReproSchema.xsd" />
     <Content Include="xsd\StackOverFlow.xsd" />
     <Content Include="xsd\TestAnnotations.xsd" />
+    <None Include="xsd\LazyLoading.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="xsd\mailxml_base.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="xsd\mailxml_base_120108.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="xsd\PersonTypeAnnotation.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="xsd\PropertyNameSpecified.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="xsd\TestOptionalElement.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="xsd\XMLSchema.xsd">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Xsd2Code.Library\Xsd2Code.Library.csproj">

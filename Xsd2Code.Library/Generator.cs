@@ -142,9 +142,12 @@ namespace Xsd2Code.Library
                 #endregion Execute extensions
 
                 return new Result<CodeNamespace>(ns, true);
-			} catch (Exception e) {
+			} catch (Exception e) 
+            {
                 return new Result<CodeNamespace>(ns, false, e.Message, MessageType.Error);
-			} finally {
+			}
+            finally 
+            {
 				if (reader != null)
 					reader.Close();
             }

@@ -20,10 +20,10 @@ namespace Xsd2Code.Library.Extensions
         {
             var classList = new List<CodeTypeDeclaration>();
 
-            classList.Add(CreateObjectsToCollectionProperties("ObjectsOriginalFromCollectionProperties", "ObjectsOriginalToCollectionProperties", "OriginalObjectsForProperty", "CollectionPropertyName", "OriginalObjects", "Dictionary<string, ObjectList>"));
-            classList.Add(CreateObjectsToCollectionProperties("ObjectsAddedToCollectionProperties", "ObjectsAddedToCollectionProperties", "AddedObjectsForProperty", "CollectionPropertyName", "AddedObjects", "Dictionary<string, ObjectList>"));
-            classList.Add(CreateObjectsToCollectionProperties("ObjectsRemovedFromCollectionProperties", "ObjectsRemovedFromCollectionProperties", "DeletedObjectsForProperty", "CollectionPropertyName", "DeletedObjects", "Dictionary<string, ObjectList>"));
-            classList.Add(CreateObjectsToCollectionProperties("PropertyValueStatesDictionary", "PropertyValueStatesDictionary", "PropertyValueStates", "Name", "PropertyValueState", "Dictionary<string, PropertyValueState>"));
+            classList.Add(CreateObjectsToCollectionProperties("ObjectsOriginalFromCollectionProperties", "Dictionary<string, ObjectList>"));
+            classList.Add(CreateObjectsToCollectionProperties("ObjectsAddedToCollectionProperties", "Dictionary<string, ObjectList>"));
+            classList.Add(CreateObjectsToCollectionProperties("ObjectsRemovedFromCollectionProperties", "Dictionary<string, ObjectList>"));
+            classList.Add(CreateObjectsToCollectionProperties("PropertyValueStatesDictionary", "Dictionary<string, PropertyValueState>"));
 
             // TrackableCollection
             var trackableCollectionClass = new CodeTypeDeclaration("TrackableCollection")
@@ -53,14 +53,6 @@ namespace Xsd2Code.Library.Extensions
                 TypeAttributes = TypeAttributes.Public,
             };
             trackableClass.BaseTypes.Add(typeof(INotifyPropertyChanged));
-            trackableClass.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference("DataContract"),
-                                                                        new[]
-                                                                            {
-                                                                                new CodeAttributeArgument(
-                                                                                    "IsReference",
-                                                                                    new CodeSnippetExpression(
-                                                                                        "true"))
-                                                                            }));
             var cm = new CodeSnippetTypeMember();
             cm.Text = Resources.ObjectChangeTracker_cs;
             trackableClass.Members.Add(cm);
@@ -142,25 +134,16 @@ namespace Xsd2Code.Library.Extensions
             return classList;
         }
 
-        private static CodeTypeDeclaration CreateObjectsToCollectionProperties(string className, string nameAttributeValue, string itemNameValue, string keyNameValue, string valueNameValue, string valueType)
+        private static CodeTypeDeclaration CreateObjectsToCollectionProperties(string className, string valueType)
         {
             var objectsOriginalFromCollectionPropertiesClass = new CodeTypeDeclaration(className)
             {
                 IsClass = true,
                 IsPartial = false,
-                TypeAttributes = TypeAttributes.Public,
+                TypeAttributes = TypeAttributes.NotPublic,
             };
 
             objectsOriginalFromCollectionPropertiesClass.BaseTypes.Add(valueType);
-            objectsOriginalFromCollectionPropertiesClass.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference("CollectionDataContract"),
-                                                                                                           new[]
-                                                                                                               {
-                                                                                                                   new CodeAttributeArgument("Name",new CodeSnippetExpression(string.Concat("\"", nameAttributeValue, "\""))),
-                                                                                                                   new CodeAttributeArgument("ItemName",new CodeSnippetExpression(string.Concat("\"", itemNameValue, "\""))),
-                                                                                                                   new CodeAttributeArgument("KeyName",new CodeSnippetExpression(string.Concat("\"", keyNameValue, "\""))),
-                                                                                                                   new CodeAttributeArgument("ValueName", new CodeSnippetExpression(string.Concat("\"", valueNameValue, "\"")))
-                                                                                                               }));
-
             objectsOriginalFromCollectionPropertiesClass.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, className));
             objectsOriginalFromCollectionPropertiesClass.EndDirectives.Add(new CodeRegionDirective(CodeRegionMode.End, className));
 

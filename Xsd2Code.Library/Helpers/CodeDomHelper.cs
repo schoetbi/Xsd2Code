@@ -173,7 +173,7 @@ namespace Xsd2Code.Library.Helpers
         /// <returns>return return comment statment</returns>
         internal static CodeCommentStatement GetReturnComment(string text)
         {
-            var comments = new CodeCommentStatement(string.Format("<returns>{0}</returns>", text),true);
+            var comments = new CodeCommentStatement(string.Format("<returns>{0}</returns>", text), true);
             return comments;
         }
 
@@ -201,7 +201,7 @@ namespace Xsd2Code.Library.Helpers
         /// <returns>CodeCommentStatement param</returns>
         internal static CodeCommentStatement GetParamComment(string paramName, string text)
         {
-            var comments = new CodeCommentStatement(string.Format("<param name=\"{0}\">{1}</param>", paramName, text),true);
+            var comments = new CodeCommentStatement(string.Format("<param name=\"{0}\">{1}</param>", paramName, text), true);
             return comments;
         }
 
@@ -322,8 +322,8 @@ namespace Xsd2Code.Library.Helpers
         {
             return new CodeFieldReferenceExpression(
                  new CodeTypeReferenceExpression(enumType), fieldName);
-        }        
-        
+        }
+
         /// <summary>
         /// Gets the Static Field CodeFieldReferenceExpression.
         /// </summary>
@@ -356,7 +356,7 @@ namespace Xsd2Code.Library.Helpers
         /// <returns></returns>
         internal static CodePropertyReferenceExpression GetObjectProperty(string targetObject, string propertyName)
         {
-            return new CodePropertyReferenceExpression(new CodeVariableReferenceExpression(targetObject),propertyName);
+            return new CodePropertyReferenceExpression(new CodeVariableReferenceExpression(targetObject), propertyName);
         }
 
         /// <summary>
@@ -365,10 +365,10 @@ namespace Xsd2Code.Library.Helpers
         /// <param name="type">The type.</param>
         /// <param name="name">The name.</param>
         /// <returns></returns>
-        internal static CodeMemberMethod GetMemberMethod(CodeTypeDeclaration type, string name )
+        internal static CodeMemberMethod GetMemberMethod(CodeTypeDeclaration type, string name)
         {
             CodeMemberMethod result = null;
-            
+
             foreach (CodeTypeMember member in type.Members)
             {
                 if (member is CodeMemberMethod && member.Name.Equals(name))
@@ -407,7 +407,7 @@ namespace Xsd2Code.Library.Helpers
             if (GeneratorContext.GeneratorParams.TrackingChanges.Enabled && GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
             {
                 propertyChangedMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "value"));
-               // this.ChangeTracker.RecordCurrentValue(info, value);
+                // this.ChangeTracker.RecordCurrentValue(info, value);
                 var changeTrackerParams = new CodeExpression[] { new CodeArgumentReferenceExpression(paramName), new CodeArgumentReferenceExpression(("value")) };
                 var changeTrackerInvokeExpression = new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "ChangeTracker.RecordCurrentValue"), changeTrackerParams);
                 propertyChangedMethod.Statements.Add(changeTrackerInvokeExpression);
@@ -450,5 +450,91 @@ namespace Xsd2Code.Library.Helpers
         }
 
         #endregion
+
+        /// <summary>
+        /// Creates a basic property.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="propertyName">Name of the property.</param>
+        /// <param name="propertyType">Type of the property.</param>
+        /// <param name="isXmlIgnone">if set to <c>true</c> [is XML ignone].</param>
+        internal static void CreateBasicProperty(CodeTypeDeclaration type, string propertyName, Type propertyType, bool isXmlIgnone)
+        {
+            var field = new CodeMemberField()
+                            {
+                                Attributes = MemberAttributes.Final | MemberAttributes.Private,
+                                Name = GetSpecifiedFieldName(propertyName),
+                                Type = new CodeTypeReference(propertyType)
+                            };
+
+            type.Members.Add(field);
+
+            var property = new CodeMemberProperty()
+            {
+                Attributes = MemberAttributes.Final | MemberAttributes.Public,
+                Name = string.Format("{0}Specified", propertyName),
+                HasGet = true,
+                HasSet = true,
+                Type = new CodeTypeReference(propertyType)
+            };
+            property.CustomAttributes.Add(new CodeAttributeDeclaration("XmlIgnore"));
+            property.GetStatements.Add(new CodeMethodReturnStatement(new CodeSnippetExpression(field.Name)));
+            property.SetStatements.Add(new CodeAssignStatement(new CodeVariableReferenceExpression(field.Name), new CodeVariableReferenceExpression("value")));
+            type.Members.Add(property);
+        }
+
+         internal static string GetSpecifiedFieldName(string propertyName)
+         {
+             return string.Format("{0}{1}FieldSpecified", propertyName.Substring(0, 1).ToLower(),
+                                  propertyName.Substring(1, propertyName.Length - 1));
+         }
+
+        /// <summary>
+        /// Finds the property.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="searchPropertyName">Name of the search property.</param>
+        /// <returns></returns>
+        internal static CodeMemberProperty FindProperty(CodeTypeDeclaration type, string searchPropertyName)
+        {
+            CodeMemberProperty specifiedProperty = null;
+            foreach (CodeTypeMember member in type.Members)
+            {
+                var codeMemberProperty = member as CodeMemberProperty;
+                if (codeMemberProperty != null)
+                {
+                    if (codeMemberProperty.Name == searchPropertyName)
+                    {
+                        specifiedProperty = codeMemberProperty;
+                        break;
+                    }
+                }
+            }
+            return specifiedProperty;
+        }
+
+        /// <summary>
+        /// Finds the field.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="searchFieldName">Name of the search field.</param>
+        /// <returns></returns>
+        internal static CodeMemberField FindField(CodeTypeDeclaration type, string searchFieldName)
+        {
+            CodeMemberField specifiedProperty = null;
+            foreach (CodeTypeMember member in type.Members)
+            {
+                var codeMember = member as CodeMemberField;
+                if (codeMember != null)
+                {
+                    if (codeMember.Name == searchFieldName)
+                    {
+                        specifiedProperty = codeMember;
+                        break;
+                    }
+                }
+            }
+            return specifiedProperty;
+        }
     }
 }

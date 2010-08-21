@@ -19,7 +19,6 @@
 //                     Refactored OnPropertyChanged to use more CodeDom Specific version found in CodeDomHelper.CreateOnPropertyChangeMethod()
 //  Updated 2010-08-16 Pascal Cabanel. Add tracking changes class.
 //                     Refactored GeneratorContext.GeneratorParams.
-//                     Add implementation of IDataErrorInfo
 // </remarks>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -62,7 +61,7 @@ namespace Xsd2Code.Library.Extensions
         /// <summary>
         /// Contains all collection fields.
         /// </summary>
-        private static readonly List<string> LasyLoadingFields = new List<string>();
+        private static readonly List<string> LazyLoadingFields = new List<string>();
 
         /// <summary>
         /// Contains all collection fields.
@@ -73,6 +72,17 @@ namespace Xsd2Code.Library.Extensions
         /// Contains all collection fields.
         /// </summary>
         protected static List<string> ShouldSerializeFields = new List<string>();
+
+        /// <summary>
+        /// List of public properties
+        /// </summary>
+        protected static List<string> PropertiesListFields = new List<string>();
+
+        /// <summary>
+        /// List of private fileds
+        /// </summary>
+        protected static List<string> MemberFieldsListFields = new List<string>();
+
 
         #endregion
 
@@ -85,10 +95,6 @@ namespace Xsd2Code.Library.Extensions
         public virtual void Process(CodeNamespace code, XmlSchema schema)
         {
             this.ImportNamespaces(code);
-            CollectionTypes.Clear();
-            LasyLoadingFields.Clear();
-            CollectionTypesFields.Clear();
-
             var types = new CodeTypeDeclaration[code.Types.Count];
             code.Types.CopyTo(types, 0);
 
@@ -117,6 +123,9 @@ namespace Xsd2Code.Library.Extensions
 
             foreach (var type in types)
             {
+                CollectionTypes.Clear();
+                LazyLoadingFields.Clear();
+                CollectionTypesFields.Clear();
 
                 // Fixes http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8781
                 // and http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6944
@@ -134,8 +143,10 @@ namespace Xsd2Code.Library.Extensions
                 // Remove default remarks attribute
                 type.Comments.Clear();
 
-                // Remove default .Net 2.0 XML attributes if disabled.
-                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXMLAttributes)
+                // Remove default .Net 2.0 XML attributes if disabled or silverlight project.
+                // Fixes http://xsd2code.codeplex.com/workitem/11761
+                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXMLAttributes
+                    || GeneratorContext.GeneratorParams.TargetFramework == TargetFramework.Silverlight)
                 {
                     this.RemoveDefaultXmlAttributes(type.CustomAttributes);
                 }
@@ -284,6 +295,8 @@ namespace Xsd2Code.Library.Extensions
 
             var ctor = this.GetConstructor(type, ref newCTor);
             ShouldSerializeFields.Clear();
+            MemberFieldsListFields.Clear();
+            PropertiesListFields.Clear();
 
             // Inherits from EntityBase
             if (GeneratorContext.GeneratorParams.GenericBaseClass.Enabled)
@@ -310,19 +323,27 @@ namespace Xsd2Code.Library.Extensions
                 // Remove default remarks attribute
                 member.Comments.Clear();
 
-                // Remove default .Net 2.0 XML attributes if disabled.
-                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXMLAttributes)
+                // Remove default .Net 2.0 XML attributes if disabled or silverlight project.
+                // Fixes http://xsd2code.codeplex.com/workitem/11761
+                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXMLAttributes
+                    || GeneratorContext.GeneratorParams.TargetFramework == TargetFramework.Silverlight)
                 {
                     this.RemoveDefaultXmlAttributes(member.CustomAttributes);
                 }
 
                 var codeMember = member as CodeMemberField;
                 if (codeMember != null)
+                {
+                    MemberFieldsListFields.Add(codeMember.Name);
                     this.ProcessFields(codeMember, ctor, codeNamespace, ref addedToConstructor);
+                }
 
                 var codeMemberProperty = member as CodeMemberProperty;
                 if (codeMemberProperty != null)
+                {
+                    PropertiesListFields.Add(codeMemberProperty.Name);
                     this.ProcessProperty(type, codeNamespace, codeMemberProperty, currentElement, schema);
+                }
             }
 
             //DCM: Moved From GeneraterFacade File based removal to CodeDom Style Attribute-based removal
@@ -362,8 +383,56 @@ namespace Xsd2Code.Library.Extensions
                 if (GeneratorContext.GeneratorParams.TrackingChanges.Enabled)
                     this.CreateChangeTrackerProperty(type);
             }
+
+            if (GeneratorContext.GeneratorParams.GeneratePropertyNameSpecified != PropertyNameSpecifiedType.Default)
+            {
+                GeneratePropertyNameSpecified(type);                
+            }
         }
 
+        /// <summary>
+        /// Generates the property name specified.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        private static void GeneratePropertyNameSpecified(CodeTypeDeclaration type)
+        {
+            foreach (var propertyName in PropertiesListFields)
+            {
+                if (!propertyName.EndsWith("Specified"))
+                {
+                    CodeMemberProperty specifiedProperty = null;
+                    // Search in all properties if PropertyNameSpecified exist
+                    string searchPropertyName = string.Format("{0}Specified", propertyName);
+                    specifiedProperty = CodeDomHelper.FindProperty(type, searchPropertyName);
+
+                    if (specifiedProperty != null)
+                    {
+                        if (GeneratorContext.GeneratorParams.GeneratePropertyNameSpecified == PropertyNameSpecifiedType.None)
+                        {
+                            type.Members.Remove(specifiedProperty);
+                            var field = CodeDomHelper.FindField(type, CodeDomHelper.GetSpecifiedFieldName(propertyName));
+                            if (field != null)
+                            {
+                                type.Members.Remove(field);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (GeneratorContext.GeneratorParams.GeneratePropertyNameSpecified == PropertyNameSpecifiedType.All)
+                        {
+
+                            CodeDomHelper.CreateBasicProperty(type, propertyName, typeof(bool), true);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates the change tracker property.
+        /// </summary>
+        /// <param name="type">The type.</param>
         private void CreateChangeTrackerProperty(CodeTypeDeclaration type)
         {
             var changeTrackerPropertyPrivate = new CodeMemberField()
@@ -383,7 +452,7 @@ namespace Xsd2Code.Library.Extensions
                                                 Type = new CodeTypeReference("ObjectChangeTracker")
                                             };
             changeTrackerProperty.CustomAttributes.Add(new CodeAttributeDeclaration("XmlIgnore"));
-            changeTrackerProperty.GetStatements.Add(this.CreateInstanceIfNotNull(changeTrackerPropertyPrivate.Name, changeTrackerProperty.Type, new CodeSnippetExpression("this") ));
+            changeTrackerProperty.GetStatements.Add(this.CreateInstanceIfNotNull(changeTrackerPropertyPrivate.Name, changeTrackerProperty.Type, new CodeSnippetExpression("this")));
             changeTrackerProperty.GetStatements.Add(new CodeMethodReturnStatement(new CodeSnippetExpression("changeTrackerField")));
             type.Members.Add(changeTrackerProperty);
         }
@@ -1380,14 +1449,15 @@ namespace Xsd2Code.Library.Extensions
             // ---------------------------------------
             if (GeneratorContext.GeneratorParams.EnableInitializeFields && GeneratorContext.GeneratorParams.CollectionObjectType != CollectionType.Array)
             {
-                CodeTypeDeclaration declaration = this.FindTypeInNamespace(field.Type.BaseType, ns);
+                bool finded;
+                CodeTypeDeclaration declaration = this.FindTypeInNamespace(field.Type.BaseType, ns, out finded);
                 if (thisIsCollectionType ||
-                     (((declaration != null) && declaration.IsClass)
-                      && ((declaration.TypeAttributes & TypeAttributes.Abstract) != TypeAttributes.Abstract)))
+                    (((declaration != null) && declaration.IsClass)
+                     && ((declaration.TypeAttributes & TypeAttributes.Abstract) != TypeAttributes.Abstract)))
                 {
-                    if (GeneratorContext.GeneratorParams.EnableLasyLoading)
+                    if (GeneratorContext.GeneratorParams.EnableLazyLoading)
                     {
-                        LasyLoadingFields.Add(field.Name);
+                        LazyLoadingFields.Add(field.Name);
                     }
                     else
                     {
@@ -1487,21 +1557,25 @@ namespace Xsd2Code.Library.Extensions
                                                 new CodeObjectCreateExpression(type, parameters));
             return statement;
         }
-        
+
         /// <summary>
         /// Recherche le CodeTypeDeclaration d'un objet en fonction de son type de base (nom de classe)
         /// </summary>
         /// <param name="typeName">Search name</param>
         /// <param name="ns">Seach into</param>
+        /// <param name="finded">if set to <c>true</c> [finded].</param>
         /// <returns>CodeTypeDeclaration found</returns>
-        protected virtual CodeTypeDeclaration FindTypeInNamespace(string typeName, CodeNamespace ns)
+        protected virtual CodeTypeDeclaration FindTypeInNamespace(string typeName, CodeNamespace ns, out bool finded)
         {
+            finded = false;
             foreach (CodeTypeDeclaration declaration in ns.Types)
             {
                 if (declaration.Name == typeName)
+                {
+                    finded = true;
                     return declaration;
+                }
             }
-
             return null;
         }
 
@@ -1581,7 +1655,6 @@ namespace Xsd2Code.Library.Extensions
                 this.CreateDataMemberAttribute(prop);
             }
 
-            // Lasy loading
             if (GeneratorContext.GeneratorParams.EnableInitializeFields)
             {
                 var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
@@ -1590,7 +1663,7 @@ namespace Xsd2Code.Library.Extensions
                     var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
                     if (field != null)
                     {
-                        if (LasyLoadingFields.IndexOf(field.FieldName) != -1)
+                        if (LazyLoadingFields.IndexOf(field.FieldName) != -1)
                         {
                             prop.GetStatements.Insert(0, this.CreateInstanceIfNotNull(field.FieldName, prop.Type));
                         }
@@ -1686,15 +1759,19 @@ namespace Xsd2Code.Library.Extensions
         /// <summary>
         /// Determines whether [is complex type] [the specified code type reference].
         /// </summary>
-        /// <param name="fieldName">Name of the field.</param>
         /// <param name="codeTypeReference">The code type reference.</param>
         /// <param name="ns">The ns.</param>
+        /// <param name="finded">if set to <c>true</c> [finded].</param>
         /// <returns>
         /// true if type is complex type (class, List, etc.)"/&gt;
         /// </returns>
-        protected bool IsComplexType(CodeTypeReference codeTypeReference, CodeNamespace ns)
+        protected bool IsComplexType(CodeTypeReference codeTypeReference, CodeNamespace ns, out bool finded)
         {
-            CodeTypeDeclaration declaration = this.FindTypeInNamespace(codeTypeReference.BaseType, ns);
+            CodeTypeDeclaration declaration = this.FindTypeInNamespace(codeTypeReference.BaseType, ns, out finded);
+            if (!finded)
+            {
+                return false;
+            }
             return ((declaration != null) && declaration.IsClass) &&
                    ((declaration.TypeAttributes & TypeAttributes.Abstract) != TypeAttributes.Abstract);
         }
@@ -1717,7 +1794,6 @@ namespace Xsd2Code.Library.Extensions
                 }
 
                 if (attrib.Name == "System.Xml.Serialization.XmlAttributeAttribute" ||
-                    attrib.Name == "System.Xml.Serialization.XmlIgnoreAttribute" ||
                     attrib.Name == "System.Xml.Serialization.XmlTypeAttribute" ||
                     attrib.Name == "System.Xml.Serialization.XmlElementAttribute" ||
                     attrib.Name == "System.CodeDom.Compiler.GeneratedCodeAttribute" ||

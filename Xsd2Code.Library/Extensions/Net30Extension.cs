@@ -58,6 +58,11 @@ namespace Xsd2Code.Library.Extensions
             this.fieldListToRemoveField.Clear();
             this.fieldWithAssignementInCtorListField.Clear();
 
+            if (type.Name == "uspsSummaryType")
+            {
+                ;
+            }
+
             // looks for properties that can not become automatic property
             CodeConstructor ctor = null;
             foreach (CodeTypeMember member in type.Members)
@@ -162,22 +167,30 @@ namespace Xsd2Code.Library.Extensions
             {
                 if (GeneratorContext.GeneratorParams.AutomaticProperties)
                 {
-                    if (!this.IsComplexType(prop.Type, ns))
+                    if (prop.Name == "MailClass")
                     {
-                        // Exclude collection type
-                        if (CollectionTypesFields.IndexOf(prop.Name) == -1)
+                        ;
+                    }
+                    bool finded;
+                    if (!this.IsComplexType(prop.Type, ns, out finded))
+                    {
+                        if (finded)
                         {
-                            // Get private fieldName
-                            var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
-                            if (propReturnStatment != null)
+                            // Exclude collection type
+                            if (CollectionTypesFields.IndexOf(prop.Name) == -1)
                             {
-                                var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
-                                if (field != null)
+                                // Get private fieldName
+                                var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
+                                if (propReturnStatment != null)
                                 {
-                                    // Check if private field don't need initialisation in ctor (defaut value).
-                                    if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.FieldName) == -1)
+                                    var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
+                                    if (field != null)
                                     {
-                                        this.autoPropertyListField.Add(member as CodeMemberProperty);
+                                        // Check if private field don't need initialisation in ctor (defaut value).
+                                        if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.FieldName) == -1)
+                                        {
+                                            this.autoPropertyListField.Add(member as CodeMemberProperty);
+                                        }
                                     }
                                 }
                             }
@@ -209,13 +222,21 @@ namespace Xsd2Code.Library.Extensions
                 {
                     if (!isArray)
                     {
-                        if (!this.IsComplexType(field.Type, ns))
+                        if (field.Name == "mailClassField")
                         {
-                            // If this field is not assigned in ctor, add it in remove list.
-                            // with automatic property, don't need to keep private field.
-                            if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.Name) == -1)
+                            ;
+                        }
+                        bool finded;
+                        if (!this.IsComplexType(field.Type, ns, out finded))
+                        {
+                            if (finded)
                             {
-                                this.fieldListToRemoveField.Add(field);
+                                // If this field is not assigned in ctor, add it in remove list.
+                                // with automatic property, don't need to keep private field.
+                                if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.Name) == -1)
+                                {
+                                    this.fieldListToRemoveField.Add(field);
+                                }
                             }
                         }
                     }
@@ -277,6 +298,10 @@ namespace Xsd2Code.Library.Extensions
                 {
                     foreach (var item in this.autoPropertyListField)
                     {
+                        if (item.Name == "MailClass")
+                        {
+                            ;
+                        }
                         var cm = new CodeSnippetTypeMember();
                         bool transformToAutomaticproperty = true;
 
@@ -293,17 +318,20 @@ namespace Xsd2Code.Library.Extensions
                                 }
                                 else
                                 {
-                                    string attributesArgument = string.Empty;
+                                    string attributesArguments = string.Empty;
                                     foreach (var arg in attrib.Arguments)
                                     {
                                         var argument = arg as CodeAttributeArgument;
                                         if (argument != null)
                                         {
-                                            attributesArgument += AttributeArgumentToString(argument);
+                                            attributesArguments += AttributeArgumentToString(argument) + ",";
                                         }
                                     }
+                                    // Remove last ","
+                                    if (attributesArguments.Length > 0)
+                                        attributesArguments = attributesArguments.Remove(attributesArguments.Length - 1);
 
-                                    attributesString.Add(string.Format("[{0}({1})]", attrib.Name, attributesArgument));
+                                    attributesString.Add(string.Format("[{0}({1})]", attrib.Name, attributesArguments));
                                 }
                             }
                         }
@@ -316,7 +344,6 @@ namespace Xsd2Code.Library.Extensions
                             }
                             var ct = new CodeTypeReferenceExpression(item.Type);
                             var prop = ExpressionToString(ct);
-
                             var text = string.Format("    public {0} {1} ", prop, item.Name);
                             cm.Text += string.Concat(text, "{get; set;}\n");
                             cm.Comments.AddRange(item.Comments);
@@ -329,6 +356,10 @@ namespace Xsd2Code.Library.Extensions
                     // Now remove all private fileds
                     foreach (var item in this.fieldListToRemoveField)
                     {
+                        if (item.Name == "mailClassField" && type.Name == "uspsSummaryType")
+                        {
+                            ;
+                        }
                         type.Members.Remove(item);
                     }
                 }

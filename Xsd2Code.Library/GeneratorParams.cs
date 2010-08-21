@@ -53,7 +53,7 @@ namespace Xsd2Code.Library
         /// </summary>
         [Category("Serialize")]
         [DefaultValue(false)]
-        [Description("Indicating whether serialize/deserialize method nust be generate.")]
+        [Description("Indicating whether serialize/deserialize method must be generate.")]
         public bool Enabled { get; set; }
 
         public override string ToString()
@@ -331,8 +331,8 @@ namespace Xsd2Code.Library
         /// </summary>
         [Category("Property")]
         [DefaultValue(false)]
-        [Description("Use lasy pattern when possible.")]
-        public bool EnableLasyLoading { get; set; }
+        [Description("Use lazy pattern when possible.")]
+        public bool EnableLazyLoading { get; set; }
 
         [Category("Property")]
         [DefaultValue(true)]
@@ -370,11 +370,27 @@ namespace Xsd2Code.Library
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
+        /// </summary>
+        [Category("Property")]
+        [DefaultValue(false)]
+        [Description("ShouldSerializeProperty is only useful for nullable type. If nullable type has no value,  the XMLSerialiser will skip the property.")]
+        public bool GenerateShouldSerializeProperty { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
+        /// </summary>
+        [Category("Property")]
+        [DefaultValue(false)]
+        [Description("[PropertyName]Specified property indicates whether the property should be ignored by the XMLSerialiser.")]
+        public PropertyNameSpecifiedType GeneratePropertyNameSpecified { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether serialize/deserialize method support
         /// </summary>
         [Category("Behavior")]
         [DefaultValue(false)]
-        [Description("Indicating whether serialize/deserialize method nust be generate.")]
+        [Description("Generate clone method based on MemberwiseClone")]
         public bool GenerateCloneMethod { get; set; }
 
         /// <summary>
@@ -412,14 +428,6 @@ namespace Xsd2Code.Library
         [DefaultValue(false)]
         [Description("Indicating to exclude class generation types includes/imported into schema.")]
         public bool ExcludeIncludedTypes { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
-        /// </summary>
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("ShouldSerializeProperty is only used for nullable type. If nullable type has no value,  the XMLSerialiser will exclude the property.")]
-        public bool GenerateShouldSerializeProperty { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether [disable debug].
@@ -617,7 +625,7 @@ namespace Xsd2Code.Library
                 parameters.CollectionObjectType = Utility.ToEnum<CollectionType>(optionLine.ExtractStrFromXML(GeneratorContext.COLLECTIONTAG));
                 parameters.Language = Utility.ToEnum<GenerationLanguage>(optionLine.ExtractStrFromXML(GeneratorContext.CODETYPETAG));
                 parameters.EnableDataBinding = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEDATABINDINGTAG));
-                parameters.EnableLasyLoading = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELASYLOADINGTAG));
+                parameters.EnableLazyLoading = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELAZYLOADINGTAG));
                 parameters.HidePrivateFieldInIde = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.HIDEPRIVATEFIELDTAG));
                 parameters.EnableSummaryComment = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLESUMMARYCOMMENTTAG));
                 parameters.TrackingChanges.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLETRACKINGCHANGESTAG));
@@ -635,6 +643,7 @@ namespace Xsd2Code.Library
                 parameters.GenerateShouldSerializeProperty = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATESHOULDSERIALIZETAG));
                 parameters.EnableInitializeFields = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEINITIALIZEFIELDSTAG), true);
                 parameters.ExcludeIncludedTypes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG));
+                parameters.GeneratePropertyNameSpecified = Utility.ToEnum<PropertyNameSpecifiedType>(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEPROPERTYNAMESPECIFIEDTAG));
 
                 string str = optionLine.ExtractStrFromXML(GeneratorContext.SERIALIZEMETHODNAMETAG);
                 parameters.Serialization.SerializeMethodName = str.Length > 0 ? str : "Serialize";
@@ -691,7 +700,7 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.COLLECTIONTAG, this.CollectionObjectType.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.CODETYPETAG, this.Language.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEDATABINDINGTAG, this.EnableDataBinding.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLELASYLOADINGTAG, this.EnableLasyLoading.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLELAZYLOADINGTAG, this.EnableLazyLoading.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLETRACKINGCHANGESTAG, this.TrackingChanges.Enabled.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATETRACKINGCLASSESTAG, this.TrackingChanges.GenerateTrackingClasses.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.HIDEPRIVATEFIELDTAG, this.HidePrivateFieldInIde.ToString()));
@@ -715,6 +724,7 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.AUTOMATICPROPERTIESTAG, this.AutomaticProperties.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATESHOULDSERIALIZETAG, this.GenerateShouldSerializeProperty.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DISABLEDEBUGTAG, this.DisableDebug.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEPROPERTYNAMESPECIFIEDTAG, this.GeneratePropertyNameSpecified.ToString()));
 
             var customUsingsStr = new StringBuilder();
             if (this.CustomUsings != null)

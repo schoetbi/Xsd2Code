@@ -53,6 +53,8 @@
             // chkOpenAfterGenerate
             // 
             this.chkOpenAfterGenerate.AutoSize = true;
+            this.chkOpenAfterGenerate.Checked = true;
+            this.chkOpenAfterGenerate.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkOpenAfterGenerate.Location = new System.Drawing.Point(15, 8);
             this.chkOpenAfterGenerate.Name = "chkOpenAfterGenerate";
             this.chkOpenAfterGenerate.Size = new System.Drawing.Size(156, 17);

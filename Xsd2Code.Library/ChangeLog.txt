@@ -60,4 +60,4 @@
 2010-08-16, PC:  Added tracking changes for c#. Use CopleTemplate at this time. Will be convert in CodeDom in futur version.
 			     Apply path of Feb 26 at 12:33 PM (support for IList collection type). (tmanthey).
 				 Apply patch Feb 26 at 2:30 PM Adds "EnableVirtualProperties" behavior for use of generated classes with NHibernate. (tmanthey).
-				 Apply Jul 15 at 11:27 AM (Obalix).
+2010-08-17, PC:  Issue #11761 SerializableAttribute error in silverlight project - http://xsd2code.codeplex.com/workitem/11761

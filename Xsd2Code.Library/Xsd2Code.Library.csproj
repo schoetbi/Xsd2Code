@@ -137,13 +137,15 @@
     <Compile Include="GeneratorFactory.cs" />
     <Content Include="CodeTemplate\TrackableCollection.cs.txt" />
     <Content Include="CodeTemplate\ObjectChangeTracker.cs.txt" />
+    <Compile Include="GeneratorParamsTypes.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Helpers\CodeDomProviderFactory.cs" />
-    <Compile Include="CollectionType.cs" />
     <Compile Include="GenerationLanguage.cs" />
     <Compile Include="Extensions\Net20Extension.cs">
       <SubType>Code</SubType>

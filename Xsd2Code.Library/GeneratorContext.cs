@@ -29,7 +29,14 @@
         /// </summary>
         public const string USEGENERICBASECLASSTAG = "UseBaseClass";
 
+        /// <summary>
+        /// Indicate if property PropertyNameSpecified must be generated.
+        /// </summary>
+        public const string GENERATEPROPERTYNAMESPECIFIEDTAG = "PropNameSpecified";
 
+        /// <summary>
+        /// Indicate whether the baseClass should be generated
+        /// </summary>
         public const string GENERATEBASECLASSTAG = "GenBaseClass";
 
         /// <summary>
@@ -97,11 +104,10 @@
         /// </summary>
         public const string ENABLEDATABINDINGTAG = "EnableDataBinding";
 
-
         /// <summary>
-        /// Enable lasy pattern
+        /// Enable lazy pattern
         /// </summary>
-        public const string ENABLELASYLOADINGTAG = "EnableLasyLoading";
+        public const string ENABLELAZYLOADINGTAG = "EnableLazyLoading";
 
         /// <summary>
         /// Generate summary documentation

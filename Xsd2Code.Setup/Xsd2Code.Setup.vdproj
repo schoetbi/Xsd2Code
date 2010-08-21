@@ -716,7 +716,7 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "FrameworkVersion" = "8:3.5.21022   "
+                "FrameworkVersion" = "8:3.5.21022      "
                 "AllowLaterVersions" = "11:FALSE"
                 "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=76617"
                 }
@@ -819,7 +819,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Xsd2Code.Library, Version=3.3.0.30100, Culture=neutral, PublicKeyToken=04032056d5f54f80, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Xsd2Code.Library, Version=3.3.0.16585, Culture=neutral, PublicKeyToken=04032056d5f54f80, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_2202986530DC4FC58A3C57EB4406BE6B"
@@ -1466,16 +1466,16 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:Xsd2Code 3.5 Alpha 1"
+        "ProductName" = "8:Xsd2Code 3.3 Beta 3"
         "ProductCode" = "8:{6255C587-C9E6-411A-A43A-F6FD0932BAE0}"
-        "PackageCode" = "8:{6CF1F09D-EF12-44FE-B5C9-569439C9F81F}"
+        "PackageCode" = "8:{7FD29714-FDF0-46BC-8350-8E6EA09CD5B1}"
         "UpgradeCode" = "8:{B1212179-F6B2-47F4-9666-9BECDD409C41}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:3.5"
+        "ProductVersion" = "8:3.3"
         "Manufacturer" = "8:Xsd2Code"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://www.codeplex.com/Xsd2Code/Thread/List.aspx"

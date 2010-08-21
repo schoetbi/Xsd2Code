@@ -130,7 +130,7 @@ namespace Xsd2Code.TestUnit.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-        ///&lt;!--Created with Liquid XML Studio - FREE Community Edition (http://www.liquid-technologies.com)--&gt;
+        ///&lt;!--Created with Liquid XML Studio Designer Edition (http://www.liquid-technologies.com)--&gt;
         ///&lt;xs:schema attributeFormDefault=&quot;unqualified&quot; elementFormDefault=&quot;qualified&quot; id=&quot;Dvd&quot; xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
         ///  &lt;xs:include schemaLocation=&quot;Actor.xsd&quot; /&gt;
         ///  &lt;xs:element name=&quot;DvdCollection&quot;&gt;
@@ -138,7 +138,8 @@ namespace Xsd2Code.TestUnit.Properties {
         ///      &lt;xs:sequence maxOccurs=&quot;unbounded&quot;&gt;
         ///        &lt;xs:element name=&quot;Dvds&quot; type=&quot;dvd&quot; /&gt;
         ///      &lt;/xs:sequence&gt;
-        ///    &lt;/xs:complexType&gt;        /// [rest of string was truncated]&quot;;.
+        ///    &lt;/xs:complexType&gt;
+        ///  &lt;/xs: [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string dvd {
             get {
@@ -179,6 +180,67 @@ namespace Xsd2Code.TestUnit.Properties {
         internal static string Hierarchical {
             get {
                 return ResourceManager.GetString("Hierarchical", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;xs:schema elementFormDefault=&quot;qualified&quot; xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+        ///  &lt;xs:element name=&quot;Address&quot;&gt;
+        ///    &lt;xs:complexType&gt;
+        ///      &lt;xs:attribute name=&quot;name&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/&gt;
+        ///      &lt;xs:attribute name=&quot;street&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/&gt;
+        ///      &lt;xs:attribute name=&quot;zip&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/&gt;
+        ///      &lt;xs:attribute name=&quot;city&quot; type=&quot;xs:string&quot; use=&quot;required&quot;/&gt;
+        ///    &lt;/xs:complexType&gt;
+        ///  &lt;/xs:element&gt;
+        ///  &lt;xs:element name=&quot;Ad [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string LazyLoading {
+            get {
+                return ResourceManager.GetString("LazyLoading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;xs:schema xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:mailxml_base=&quot;http://idealliance.org/maildat/Specs/md091/mailxml60a/base&quot; xmlns:mailxml=&quot;http://idealliance.org/maildat/Specs/md091/mailxml60a/mailxml&quot; attributeFormDefault=&quot;qualified&quot; elementFormDefault=&quot;qualified&quot; targetNamespace=&quot;http://idealliance.org/maildat/Specs/md091/mailxml60a/mailxml&quot; version=&quot;mailxml60a120308&quot; &gt;
+        ///  &lt;xs:import schemaLocation=&quot;mailxml_base_120108.xsd&quot; namespace=&quot;http://idealliance.org/maildat/Specs/md091/mailxml60a/base&quot;/ [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string mailxml_base {
+            get {
+                return ResourceManager.GetString("mailxml_base", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;xs:schema xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:mailxml_base=&quot;http://idealliance.org/maildat/Specs/md091/mailxml60a/base&quot; attributeFormDefault=&quot;unqualified&quot; elementFormDefault=&quot;qualified&quot; targetNamespace=&quot;http://idealliance.org/maildat/Specs/md091/mailxml60a/base&quot; version=&quot;MAILxmlBase60a120108&quot;&gt;
+        ///  &lt;xs:simpleType name=&quot;actionCodeType&quot;&gt;
+        ///    &lt;xs:annotation&gt;
+        ///      &lt;xs:documentation&gt;Action Code for USPS&lt;/xs:documentation&gt;
+        ///    &lt;/xs:annotation&gt;
+        ///    &lt;xs:restriction base=&quot;xs:string&quot;&gt;
+        ///      &lt;xs:enu [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string mailxml_base_120108 {
+            get {
+                return ResourceManager.GetString("mailxml_base_120108", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+        ///&lt;!--Created with Liquid XML Studio Designer Edition (http://www.liquid-technologies.com)--&gt;
+        ///&lt;xs:schema xmlns:mstns=&quot;http://tempuri.org/Gender.xsd&quot; elementFormDefault=&quot;qualified&quot; targetNamespace=&quot;http://tempuri.org/Gender.xsd&quot; id=&quot;Gender&quot; xmlns:xs=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+        ///  &lt;xs:element name=&quot;Root&quot;&gt;
+        ///    &lt;xs:complexType&gt;
+        ///      &lt;xs:sequence&gt;
+        ///        &lt;xs:element name=&quot;Gender&quot; type=&quot;mstns:ksgender&quot; minOccurs=&quot;0&quot; maxOccurs=&quot;1&quot;&gt;
+        ///          &lt;xs:annotation&gt;
+        ///   [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PropertyNameSpecified {
+            get {
+                return ResourceManager.GetString("PropertyNameSpecified", resourceCulture);
             }
         }
         

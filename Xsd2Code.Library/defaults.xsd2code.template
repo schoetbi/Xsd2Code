@@ -3,7 +3,7 @@
   <Collection>List</Collection>
   <codeType>CSharp</codeType>
   <EnableDataBinding>False</EnableDataBinding>
-  <EnableLasyLoading>False</EnableLasyLoading>
+  <EnableLazyLoading>False</EnableLazyLoading>
   <HidePrivateFieldInIDE>False</HidePrivateFieldInIDE>
   <EnableSummaryComment>False</EnableSummaryComment>
   <IncludeSerializeMethod>False</IncludeSerializeMethod>
