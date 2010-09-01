@@ -299,7 +299,7 @@ namespace Xsd2Code.Library.Extensions
             PropertiesListFields.Clear();
 
             // Inherits from EntityBase
-            if (GeneratorContext.GeneratorParams.GenericBaseClass.Enabled)
+            if (GeneratorContext.GeneratorParams.GenericBaseClass.Enabled && type.BaseTypes.Count == 0)
             {
                 var ctr = new CodeTypeReference(GeneratorContext.GeneratorParams.GenericBaseClass.BaseClassName);
                 ctr.TypeArguments.Add(new CodeTypeReference(type.Name));
@@ -386,7 +386,7 @@ namespace Xsd2Code.Library.Extensions
 
             if (GeneratorContext.GeneratorParams.GeneratePropertyNameSpecified != PropertyNameSpecifiedType.Default)
             {
-                GeneratePropertyNameSpecified(type);                
+                GeneratePropertyNameSpecified(type);
             }
         }
 
