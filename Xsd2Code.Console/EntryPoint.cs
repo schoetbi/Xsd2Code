@@ -193,11 +193,11 @@ namespace Xsd2Code
                     case "/dbg+":
                     case "/debug":
                     case "/debug+":
-                        generatorParams.DisableDebug = false;
+                        generatorParams.Miscellaneous.DisableDebug = false;
                         break;
                     case "/dbg-":
                     case "/debug-":
-                        generatorParams.DisableDebug = true;
+                        generatorParams.Miscellaneous.DisableDebug = true;
                         break;
 
                     case "/db":
@@ -218,10 +218,10 @@ namespace Xsd2Code
 
                     case "/ap":
                     case "/ap+":
-                        generatorParams.AutomaticProperties = true;
+                        generatorParams.PropertyParams.AutomaticProperties = true;
                         break;
                     case "/ap-":
-                        generatorParams.AutomaticProperties = false;
+                        generatorParams.PropertyParams.AutomaticProperties = false;
                         break;
 
                     case "/if":
@@ -234,10 +234,10 @@ namespace Xsd2Code
 
                     case "/eit":
                     case "/eit+":
-                        generatorParams.ExcludeIncludedTypes = true;
+                        generatorParams.Miscellaneous.ExcludeIncludedTypes = true;
                         break;
                     case "/eit-":
-                        generatorParams.ExcludeIncludedTypes = false;
+                        generatorParams.Miscellaneous.ExcludeIncludedTypes = false;
                         break;
                     case "/gbc":
                     case "/gbc+":
@@ -255,11 +255,11 @@ namespace Xsd2Code
                         break;
                     case "/sc":
                     case "/sc+":
-                        generatorParams.EnableSummaryComment = true;
+                        generatorParams.Miscellaneous.EnableSummaryComment = true;
                         break;
                     case "/sc-":
                     case "/sum-":
-                        generatorParams.EnableSummaryComment = false;
+                        generatorParams.Miscellaneous.EnableSummaryComment = false;
                         break;
 
                     case "/xa":
@@ -280,10 +280,10 @@ namespace Xsd2Code
 
                     case "/hp":
                     case "/hp+":
-                        generatorParams.HidePrivateFieldInIde = true;
+                        generatorParams.Miscellaneous.HidePrivateFieldInIde = true;
                         break;
                     case "/hp-":
-                        generatorParams.HidePrivateFieldInIde = false;
+                        generatorParams.Miscellaneous.HidePrivateFieldInIde = false;
                         break;
 
                     case "/tc":
@@ -306,10 +306,10 @@ namespace Xsd2Code
 
                     case "/ssp":
                     case "/ssp+":
-                        generatorParams.GenerateShouldSerializeProperty = true;
+                        generatorParams.PropertyParams.GenerateShouldSerializeProperty = true;
                         break;
                     case "/ssp-":
-                        generatorParams.GenerateShouldSerializeProperty = false;
+                        generatorParams.PropertyParams.GenerateShouldSerializeProperty = false;
                         break;
 
                     case "/s":

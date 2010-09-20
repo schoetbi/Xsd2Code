@@ -129,7 +129,7 @@ namespace Xsd2Code.Library.Extensions
 
                 // Fixes http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=8781
                 // and http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6944
-                if (GeneratorContext.GeneratorParams.ExcludeIncludedTypes)
+                if (GeneratorContext.GeneratorParams.Miscellaneous.ExcludeIncludedTypes)
                 {
                     //if the typeName is NOT defined in the current schema, skip it.
                     if (!ContainsTypeName(schema, type))
@@ -315,7 +315,7 @@ namespace Xsd2Code.Library.Extensions
             this.CreateDataContractAttribute(type, schema);
 
             XmlSchemaElement currentElement = null;
-            if (GeneratorContext.GeneratorParams.EnableSummaryComment)
+            if (GeneratorContext.GeneratorParams.Miscellaneous.EnableSummaryComment)
                 currentElement = this.CreateSummaryCommentFromSchema(type, schema, currentElement);
 
             foreach (CodeTypeMember member in type.Members)
@@ -347,7 +347,7 @@ namespace Xsd2Code.Library.Extensions
             }
 
             //DCM: Moved From GeneraterFacade File based removal to CodeDom Style Attribute-based removal
-            if (GeneratorContext.GeneratorParams.DisableDebug)
+            if (GeneratorContext.GeneratorParams.Miscellaneous.DisableDebug)
             {
                 this.RemoveDebugAttributes(type.CustomAttributes);
             }
@@ -356,7 +356,7 @@ namespace Xsd2Code.Library.Extensions
             if (addedToConstructor && newCTor)
                 type.Members.Add(ctor);
 
-            if (GeneratorContext.GeneratorParams.GenerateShouldSerializeProperty)
+            if (GeneratorContext.GeneratorParams.PropertyParams.GenerateShouldSerializeProperty)
             {
                 foreach (var shouldSerialize in ShouldSerializeFields)
                 {
@@ -384,7 +384,7 @@ namespace Xsd2Code.Library.Extensions
                     this.CreateChangeTrackerProperty(type);
             }
 
-            if (GeneratorContext.GeneratorParams.GeneratePropertyNameSpecified != PropertyNameSpecifiedType.Default)
+            if (GeneratorContext.GeneratorParams.PropertyParams.GeneratePropertyNameSpecified != PropertyNameSpecifiedType.Default)
             {
                 GeneratePropertyNameSpecified(type);
             }
@@ -407,7 +407,7 @@ namespace Xsd2Code.Library.Extensions
 
                     if (specifiedProperty != null)
                     {
-                        if (GeneratorContext.GeneratorParams.GeneratePropertyNameSpecified == PropertyNameSpecifiedType.None)
+                        if (GeneratorContext.GeneratorParams.PropertyParams.GeneratePropertyNameSpecified == PropertyNameSpecifiedType.None)
                         {
                             type.Members.Remove(specifiedProperty);
                             var field = CodeDomHelper.FindField(type, CodeDomHelper.GetSpecifiedFieldName(propertyName));
@@ -419,7 +419,7 @@ namespace Xsd2Code.Library.Extensions
                     }
                     else
                     {
-                        if (GeneratorContext.GeneratorParams.GeneratePropertyNameSpecified == PropertyNameSpecifiedType.All)
+                        if (GeneratorContext.GeneratorParams.PropertyParams.GeneratePropertyNameSpecified == PropertyNameSpecifiedType.All)
                         {
 
                             CodeDomHelper.CreateBasicProperty(type, propertyName, typeof(bool), true);
@@ -1418,7 +1418,7 @@ namespace Xsd2Code.Library.Extensions
             // ---------------------------------------------
             if (member.Attributes == MemberAttributes.Private)
             {
-                if (GeneratorContext.GeneratorParams.HidePrivateFieldInIde)
+                if (GeneratorContext.GeneratorParams.Miscellaneous.HidePrivateFieldInIde)
                 {
                     var attributeType = new CodeTypeReference(
                         typeof(EditorBrowsableAttribute).Name.Replace("Attribute", string.Empty));
@@ -1455,7 +1455,7 @@ namespace Xsd2Code.Library.Extensions
                     (((declaration != null) && declaration.IsClass)
                      && ((declaration.TypeAttributes & TypeAttributes.Abstract) != TypeAttributes.Abstract)))
                 {
-                    if (GeneratorContext.GeneratorParams.EnableLazyLoading)
+                    if (GeneratorContext.GeneratorParams.PropertyParams.EnableLazyLoading)
                     {
                         LazyLoadingFields.Add(field.Name);
                     }
@@ -1589,7 +1589,7 @@ namespace Xsd2Code.Library.Extensions
         /// <param name="schema">XML Schema</param>
         protected virtual void ProcessProperty(CodeTypeDeclaration type, CodeNamespace ns, CodeTypeMember member, XmlSchemaElement xmlElement, XmlSchema schema)
         {
-            if (GeneratorContext.GeneratorParams.EnableSummaryComment)
+            if (GeneratorContext.GeneratorParams.Miscellaneous.EnableSummaryComment)
             {
                 if (xmlElement != null)
                 {
@@ -1640,7 +1640,7 @@ namespace Xsd2Code.Library.Extensions
                 CollectionTypesFields.Add(prop.Name);
             }
 
-            if (GeneratorContext.GeneratorParams.EnableVirtualProperties)
+            if (GeneratorContext.GeneratorParams.PropertyParams.EnableVirtualProperties)
             {
                 prop.Attributes ^= MemberAttributes.Final;
             }
@@ -1935,7 +1935,7 @@ namespace Xsd2Code.Library.Extensions
                 ctor = this.CreateClassConstructor(type);
             }
 
-            if (GeneratorContext.GeneratorParams.EnableSummaryComment)
+            if (GeneratorContext.GeneratorParams.Miscellaneous.EnableSummaryComment)
                 CodeDomHelper.CreateSummaryComment(ctor.Comments, string.Format("{0} class constructor", ctor.Name));
 
             return ctor;

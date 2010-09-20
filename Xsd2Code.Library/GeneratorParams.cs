@@ -21,6 +21,116 @@ namespace Xsd2Code.Library
         }
     }
 
+
+    [Serializable]
+    public class MiscellaneousParams : GeneratorParamsBase
+    {
+        /// <summary>
+        /// Gets or sets a value indicating whether [disable debug].
+        /// </summary>
+        /// <value><c>true</c> if [disable debug]; otherwise, <c>false</c>.</value>
+        [Category("Behavior")]
+        [DefaultValue(false)]
+        [Description("Indicating whether if generate attribute for debug into generated code.")]
+        public bool DisableDebug { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
+        /// </summary>
+        [Category("Behavior")]
+        [DefaultValue(false)]
+        [Description("Indicating whether if generate EditorBrowsableState.Never attribute.")]
+        public bool HidePrivateFieldInIde { get; set; }
+
+        [Category("Behavior")]
+        [DefaultValue(false)]
+        [Description("Indicating to exclude class generation types includes/imported into schema.")]
+        public bool ExcludeIncludedTypes { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate summary documentation
+        /// </summary>
+        [Category("Behavior")]
+        [DefaultValue(false)]
+        [Description("Indicating whether if generate summary documentation from xsd annotation.")]
+        public bool EnableSummaryComment { get; set; }
+    }
+
+    [Serializable]
+    public class PropertyParams : GeneratorParamsBase
+    {
+        private GeneratorParams mainParamsFields;
+
+        /// <summary>
+        /// Indicate if use automatic properties
+        /// </summary>
+        private bool automaticPropertiesField;
+
+        public PropertyParams(GeneratorParams mainParams)
+        {
+            mainParamsFields = mainParams;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if implement INotifyPropertyChanged
+        /// </summary>
+        [Category("Property")]
+        [DefaultValue(false)]
+        [Description("Use lazy pattern when possible.")]
+        public bool EnableLazyLoading { get; set; }
+
+        [Category("Property")]
+        [DefaultValue(false)]
+        [Description("Enable/Disable virtual properties. Use with NHibernate.")]
+        public bool EnableVirtualProperties { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether serialize/deserialize method support
+        /// </summary>
+        [Category("Property")]
+        [DefaultValue(false)]
+        [Description("Generate automatic properties when possible. (Work only for csharp with target framework 3.0 or 3.5 and EnableDataBinding disable)")]
+        public bool AutomaticProperties
+        {
+            get
+            {
+                return this.automaticPropertiesField;
+            }
+
+            set
+            {
+                if (value)
+                {
+                    if (this.mainParamsFields.TargetFramework != TargetFramework.Net20)
+                    {
+                        this.automaticPropertiesField = true;
+                        this.mainParamsFields.EnableDataBinding = false;
+                    }
+                }
+                else
+                {
+                    this.automaticPropertiesField = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
+        /// </summary>
+        [Category("Property")]
+        [DefaultValue(false)]
+        [Description("ShouldSerializeProperty is only useful for nullable type. If nullable type has no value,  the XMLSerialiser will skip the property.")]
+        public bool GenerateShouldSerializeProperty { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
+        /// </summary>
+        [Category("Property")]
+        [DefaultValue(false)]
+        [Description("[PropertyName]Specified property indicates whether the property should be ignored by the XMLSerialiser.")]
+        public PropertyNameSpecifiedType GeneratePropertyNameSpecified { get; set; }
+    }
+
     [Serializable]
     public class SerializeParams : GeneratorParamsBase
     {
@@ -186,14 +296,19 @@ namespace Xsd2Code.Library
         private SerializeParams serializeFiledField;
 
         /// <summary>
-        /// Indicate if use automatic properties
+        /// Miscellaneous properties
         /// </summary>
-        private bool automaticPropertiesField;
+        private MiscellaneousParams miscellaneousParamsField;
+
+        /// <summary>
+        /// Configure options properties
+        /// </summary>
+        private bool enableDataBindingField;
 
         /// <summary>
         /// Indicate if implement INotifyPropertyChanged
         /// </summary>
-        private bool enableDataBindingField;
+        private PropertyParams propertyParamsField;
         #endregion
 
         /// <summary>
@@ -214,7 +329,7 @@ namespace Xsd2Code.Library
             this.GenericBaseClass.BaseClassName = "EntityBase";
             this.GenericBaseClass.Enabled = false;
             this.EnableInitializeFields = true;
-            this.ExcludeIncludedTypes = false;
+            this.Miscellaneous.ExcludeIncludedTypes = false;
             this.TrackingChanges.PropertyChanged += TrackingChangesPropertyChanged;
         }
 
@@ -317,7 +432,7 @@ namespace Xsd2Code.Library
                 this.enableDataBindingField = value;
                 if (this.enableDataBindingField)
                 {
-                    this.AutomaticProperties = false;
+                    this.PropertyParams.AutomaticProperties = false;
                 }
                 else
                 {
@@ -325,65 +440,6 @@ namespace Xsd2Code.Library
                 }
             }
         }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether if implement INotifyPropertyChanged
-        /// </summary>
-        [Category("Property")]
-        [DefaultValue(false)]
-        [Description("Use lazy pattern when possible.")]
-        public bool EnableLazyLoading { get; set; }
-
-        [Category("Property")]
-        [DefaultValue(true)]
-        [Description("Enable/Disable virtual properties. Use with NHibernate.")]
-        public bool EnableVirtualProperties { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether serialize/deserialize method support
-        /// </summary>
-        [Category("Property")]
-        [DefaultValue(false)]
-        [Description("Generate automatic properties when possible. (Work only for csharp with target framework 3.0 or 3.5 and EnableDataBinding disable)")]
-        public bool AutomaticProperties
-        {
-            get
-            {
-                return this.automaticPropertiesField;
-            }
-
-            set
-            {
-                if (value)
-                {
-                    if (this.targetFrameworkField != TargetFramework.Net20)
-                    {
-                        this.automaticPropertiesField = true;
-                        this.EnableDataBinding = false;
-                    }
-                }
-                else
-                {
-                    this.automaticPropertiesField = false;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
-        /// </summary>
-        [Category("Property")]
-        [DefaultValue(false)]
-        [Description("ShouldSerializeProperty is only useful for nullable type. If nullable type has no value,  the XMLSerialiser will skip the property.")]
-        public bool GenerateShouldSerializeProperty { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
-        /// </summary>
-        [Category("Property")]
-        [DefaultValue(false)]
-        [Description("[PropertyName]Specified property indicates whether the property should be ignored by the XMLSerialiser.")]
-        public PropertyNameSpecifiedType GeneratePropertyNameSpecified { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether serialize/deserialize method support
@@ -411,40 +467,10 @@ namespace Xsd2Code.Library
                 this.targetFrameworkField = value;
                 if (this.targetFrameworkField == TargetFramework.Net20)
                 {
-                    this.AutomaticProperties = false;
+                    this.PropertyParams.AutomaticProperties = false;
                 }
             }
         }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
-        /// </summary>
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("Indicating whether if generate EditorBrowsableState.Never attribute.")]
-        public bool HidePrivateFieldInIde { get; set; }
-
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("Indicating to exclude class generation types includes/imported into schema.")]
-        public bool ExcludeIncludedTypes { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether [disable debug].
-        /// </summary>
-        /// <value><c>true</c> if [disable debug]; otherwise, <c>false</c>.</value>
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("Indicating whether if generate attribute for debug into generated code.")]
-        public bool DisableDebug { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether if generate summary documentation
-        /// </summary>
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("Indicating whether if generate summary documentation from xsd annotation.")]
-        public bool EnableSummaryComment { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether if generate summary documentation
@@ -473,6 +499,30 @@ namespace Xsd2Code.Library
         /// Gets or sets a value indicating whether if generate summary documentation
         /// </summary>
         [Category("Behavior")]
+        [Description("Configure options properties.")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public PropertyParams PropertyParams
+        {
+            get
+            {
+                if (propertyParamsField == null)
+                {
+                    propertyParamsField = new PropertyParams(this);
+                }
+                return propertyParamsField;
+            }
+
+            set
+            {
+                propertyParamsField = value;
+            }
+        }
+
+
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate summary documentation
+        /// </summary>
+        [Category("Behavior")]
         [Description("XML Serilisation configuration.")]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public SerializeParams Serialization
@@ -492,6 +542,28 @@ namespace Xsd2Code.Library
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether if generate summary documentation
+        /// </summary>
+        [Category("Behavior")]
+        [Description("Miscellaneous")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public MiscellaneousParams Miscellaneous
+        {
+            get
+            {
+                if (miscellaneousParamsField == null)
+                {
+                    miscellaneousParamsField = new MiscellaneousParams();
+                }
+                return miscellaneousParamsField;
+            }
+
+            set
+            {
+                miscellaneousParamsField = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether if generate summary documentation
@@ -625,25 +697,25 @@ namespace Xsd2Code.Library
                 parameters.CollectionObjectType = Utility.ToEnum<CollectionType>(optionLine.ExtractStrFromXML(GeneratorContext.COLLECTIONTAG));
                 parameters.Language = Utility.ToEnum<GenerationLanguage>(optionLine.ExtractStrFromXML(GeneratorContext.CODETYPETAG));
                 parameters.EnableDataBinding = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEDATABINDINGTAG));
-                parameters.EnableLazyLoading = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELAZYLOADINGTAG));
-                parameters.HidePrivateFieldInIde = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.HIDEPRIVATEFIELDTAG));
-                parameters.EnableSummaryComment = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLESUMMARYCOMMENTTAG));
+                parameters.PropertyParams.EnableLazyLoading = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELAZYLOADINGTAG));
+                parameters.Miscellaneous.HidePrivateFieldInIde = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.HIDEPRIVATEFIELDTAG));
+                parameters.Miscellaneous.EnableSummaryComment = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLESUMMARYCOMMENTTAG));
                 parameters.TrackingChanges.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLETRACKINGCHANGESTAG));
                 parameters.TrackingChanges.GenerateTrackingClasses = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATETRACKINGCLASSESTAG));
                 parameters.Serialization.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.INCLUDESERIALIZEMETHODTAG));
                 parameters.GenerateCloneMethod = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATECLONEMETHODTAG));
                 parameters.GenerateDataContracts = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEDATACONTRACTSTAG));
                 parameters.TargetFramework = Utility.ToEnum<TargetFramework>(optionLine.ExtractStrFromXML(GeneratorContext.CODEBASETAG));
-                parameters.DisableDebug = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.DISABLEDEBUGTAG));
+                parameters.Miscellaneous.DisableDebug = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.DISABLEDEBUGTAG));
                 parameters.Serialization.GenerateXMLAttributes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEXMLATTRIBUTESTAG));
-                parameters.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
-                parameters.EnableVirtualProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG));
+                parameters.PropertyParams.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
+                parameters.PropertyParams.EnableVirtualProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG));
                 parameters.GenericBaseClass.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
                 parameters.GenericBaseClass.GenerateBaseClass = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEBASECLASSTAG));
-                parameters.GenerateShouldSerializeProperty = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATESHOULDSERIALIZETAG));
+                parameters.PropertyParams.GenerateShouldSerializeProperty = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATESHOULDSERIALIZETAG));
                 parameters.EnableInitializeFields = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEINITIALIZEFIELDSTAG), true);
-                parameters.ExcludeIncludedTypes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG));
-                parameters.GeneratePropertyNameSpecified = Utility.ToEnum<PropertyNameSpecifiedType>(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEPROPERTYNAMESPECIFIEDTAG));
+                parameters.Miscellaneous.ExcludeIncludedTypes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG));
+                parameters.PropertyParams.GeneratePropertyNameSpecified = Utility.ToEnum<PropertyNameSpecifiedType>(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEPROPERTYNAMESPECIFIEDTAG));
 
                 string str = optionLine.ExtractStrFromXML(GeneratorContext.SERIALIZEMETHODNAMETAG);
                 parameters.Serialization.SerializeMethodName = str.Length > 0 ? str : "Serialize";
@@ -700,12 +772,12 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.COLLECTIONTAG, this.CollectionObjectType.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.CODETYPETAG, this.Language.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEDATABINDINGTAG, this.EnableDataBinding.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLELAZYLOADINGTAG, this.EnableLazyLoading.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLELAZYLOADINGTAG, this.PropertyParams.EnableLazyLoading.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLETRACKINGCHANGESTAG, this.TrackingChanges.Enabled.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATETRACKINGCLASSESTAG, this.TrackingChanges.GenerateTrackingClasses.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.HIDEPRIVATEFIELDTAG, this.HidePrivateFieldInIde.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLESUMMARYCOMMENTTAG, this.EnableSummaryComment.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG, this.EnableVirtualProperties.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.HIDEPRIVATEFIELDTAG, this.Miscellaneous.HidePrivateFieldInIde.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLESUMMARYCOMMENTTAG, this.Miscellaneous.EnableSummaryComment.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG, this.PropertyParams.EnableVirtualProperties.ToString()));
 
             if (!string.IsNullOrEmpty(this.CollectionBase))
                 optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.COLLECTIONBASETAG, this.CollectionBase));
@@ -721,10 +793,10 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.SAVETOFILEMETHODNAMETAG, this.Serialization.SaveToFileMethodName));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.LOADFROMFILEMETHODNAMETAG, this.Serialization.LoadFromFileMethodName));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEXMLATTRIBUTESTAG, this.Serialization.GenerateXMLAttributes.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.AUTOMATICPROPERTIESTAG, this.AutomaticProperties.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATESHOULDSERIALIZETAG, this.GenerateShouldSerializeProperty.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DISABLEDEBUGTAG, this.DisableDebug.ToString()));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEPROPERTYNAMESPECIFIEDTAG, this.GeneratePropertyNameSpecified.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.AUTOMATICPROPERTIESTAG, this.PropertyParams.AutomaticProperties.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATESHOULDSERIALIZETAG, this.PropertyParams.GenerateShouldSerializeProperty.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DISABLEDEBUGTAG, this.Miscellaneous.DisableDebug.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEPROPERTYNAMESPECIFIEDTAG, this.PropertyParams.GeneratePropertyNameSpecified.ToString()));
 
             var customUsingsStr = new StringBuilder();
             if (this.CustomUsings != null)
@@ -746,7 +818,7 @@ namespace Xsd2Code.Library
                                                               customUsingsStr.ToString()));
             }
 
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG, this.ExcludeIncludedTypes.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.EXCLUDEINCLUDEDTYPESTAG, this.Miscellaneous.ExcludeIncludedTypes.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEINITIALIZEFIELDSTAG, this.EnableInitializeFields.ToString()));
 
             return optionsLine.ToString();

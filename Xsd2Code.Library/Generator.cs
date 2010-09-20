@@ -64,15 +64,15 @@ namespace Xsd2Code.Library
                                       {
                                           CollectionObjectType = collectionType,
                                           EnableDataBinding = enableDataBinding,
-                                          HidePrivateFieldInIde = hidePrivate,
                                           Language = language,
-                                          EnableSummaryComment = enableSummaryComment,
                                           CustomUsings = customUsings,
                                           CollectionBase = collectionBase,
                                           GenerateCloneMethod = generateCloneMethod,
                                           TargetFramework = targetFramework
                                       };
 
+            generatorParams.Miscellaneous.HidePrivateFieldInIde = hidePrivate;
+            generatorParams.Miscellaneous.EnableSummaryComment = enableSummaryComment;
             generatorParams.Serialization.Enabled = includeSerializeMethod;
             generatorParams.Serialization.SerializeMethodName = serializeMethodName;
             generatorParams.Serialization.DeserializeMethodName = deserializeMethodName;
@@ -87,11 +87,13 @@ namespace Xsd2Code.Library
         /// </summary>
         /// <param name="generatorParams">Generator parameters</param>
         /// <returns></returns>
-		internal static Result<CodeNamespace> Process(GeneratorParams generatorParams) {
+        internal static Result<CodeNamespace> Process(GeneratorParams generatorParams)
+        {
             var ns = new CodeNamespace();
 
-			XmlReader reader = null;
-			try {
+            XmlReader reader = null;
+            try
+            {
 
                 #region Set generation context
 
@@ -104,27 +106,30 @@ namespace Xsd2Code.Library
                 XmlSchema xsd;
                 var schemas = new XmlSchemas();
 
-				reader = XmlReader.Create(generatorParams.InputFilePath);
-				xsd = XmlSchema.Read(reader, new ValidationEventHandler(Validate));
+                reader = XmlReader.Create(generatorParams.InputFilePath);
+                xsd = XmlSchema.Read(reader, new ValidationEventHandler(Validate));
 
                 var schemaSet = new XmlSchemaSet();
                 schemaSet.Add(xsd);
                 schemaSet.Compile();
 
-				foreach (XmlSchema schema in schemaSet.Schemas()) {
+                foreach (XmlSchema schema in schemaSet.Schemas())
+                {
                     schemas.Add(schema);
                 }
 
                 var exporter = new XmlCodeExporter(ns);
                 var importer = new XmlSchemaImporter(schemas);
 
-				foreach (XmlSchemaElement element in xsd.Elements.Values) {
+                foreach (XmlSchemaElement element in xsd.Elements.Values)
+                {
                     var mapping = importer.ImportTypeMapping(element.QualifiedName);
                     exporter.ExportTypeMapping(mapping);
                 }
 
                 //Fixes/handles http://xsd2code.codeplex.com/WorkItem/View.aspx?WorkItemId=6941
-				foreach (XmlSchemaComplexType complex in xsd.Items.OfType<XmlSchemaComplexType>()) {
+                foreach (XmlSchemaComplexType complex in xsd.Items.OfType<XmlSchemaComplexType>())
+                {
                     var mapping = importer.ImportSchemaType(complex.QualifiedName);
                     exporter.ExportTypeMapping(mapping);
                 }
@@ -142,18 +147,20 @@ namespace Xsd2Code.Library
                 #endregion Execute extensions
 
                 return new Result<CodeNamespace>(ns, true);
-			} catch (Exception e) 
+            }
+            catch (Exception e)
             {
                 return new Result<CodeNamespace>(ns, false, e.Message, MessageType.Error);
-			}
-            finally 
+            }
+            finally
             {
-				if (reader != null)
-					reader.Close();
+                if (reader != null)
+                    reader.Close();
             }
         }
 
-		private static void Validate(Object sender, ValidationEventArgs e) {
+        private static void Validate(Object sender, ValidationEventArgs e)
+        {
             if (e.Severity == XmlSeverityType.Error)
                 throw new Exception("Schema validation failed:\n" + e.Message);
         }

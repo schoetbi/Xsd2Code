@@ -19,6 +19,7 @@
   <xs:complexType name="dvd">
     <xs:sequence>
       <xs:element name="Year" type="IntValue" nillable="true" />
+      <xs:element name="Publish" type="xs:date" nillable="true" />
       <xs:element name="Title" type="xs:string" default="DefaultTitle" nillable="true">
         <xs:annotation>
           <xs:documentation>

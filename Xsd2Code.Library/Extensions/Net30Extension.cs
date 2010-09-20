@@ -58,11 +58,6 @@ namespace Xsd2Code.Library.Extensions
             this.fieldListToRemoveField.Clear();
             this.fieldWithAssignementInCtorListField.Clear();
 
-            if (type.Name == "uspsSummaryType")
-            {
-                ;
-            }
-
             // looks for properties that can not become automatic property
             CodeConstructor ctor = null;
             foreach (CodeTypeMember member in type.Members)
@@ -162,35 +157,34 @@ namespace Xsd2Code.Library.Extensions
 
             base.ProcessProperty(type, ns, member, xmlElement, schema);
 
+            int i = 0;
+            if (member.Name == "ActualPalletCount")
+            {
+                i = i++;
+            }
             // Generate automatic properties.
             if (GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
             {
-                if (GeneratorContext.GeneratorParams.AutomaticProperties)
+                if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
                 {
-                    if (prop.Name == "MailClass")
+                    bool excludeType = false;
+                    // Change automatic property only for type of system Namespace, 
+                    if (prop.Type.BaseType.Contains("System."))
                     {
-                        ;
-                    }
-                    bool finded;
-                    if (!this.IsComplexType(prop.Type, ns, out finded))
-                    {
-                        if (finded)
+                        // Exclude collection type
+                        if (CollectionTypesFields.IndexOf(prop.Name) == -1)
                         {
-                            // Exclude collection type
-                            if (CollectionTypesFields.IndexOf(prop.Name) == -1)
+                            // Get private fieldName
+                            var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
+                            if (propReturnStatment != null)
                             {
-                                // Get private fieldName
-                                var propReturnStatment = prop.GetStatements[0] as CodeMethodReturnStatement;
-                                if (propReturnStatment != null)
+                                var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
+                                if (field != null)
                                 {
-                                    var field = propReturnStatment.Expression as CodeFieldReferenceExpression;
-                                    if (field != null)
+                                    // Check if private field don't need initialisation in ctor (defaut value).
+                                    if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.FieldName) == -1)
                                     {
-                                        // Check if private field don't need initialisation in ctor (defaut value).
-                                        if (this.fieldWithAssignementInCtorListField.FindIndex(p => p == field.FieldName) == -1)
-                                        {
-                                            this.autoPropertyListField.Add(member as CodeMemberProperty);
-                                        }
+                                        this.autoPropertyListField.Add(member as CodeMemberProperty);
                                     }
                                 }
                             }
@@ -218,7 +212,7 @@ namespace Xsd2Code.Library.Extensions
             // Generate automatic properties.
             if (GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
             {
-                if (GeneratorContext.GeneratorParams.AutomaticProperties)
+                if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
                 {
                     if (!isArray)
                     {
@@ -294,7 +288,7 @@ namespace Xsd2Code.Library.Extensions
             if (Equals(GeneratorContext.GeneratorParams.Language, GenerationLanguage.CSharp))
             {
                 // If databinding is disable, use automatic property
-                if (GeneratorContext.GeneratorParams.AutomaticProperties)
+                if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
                 {
                     foreach (var item in this.autoPropertyListField)
                     {
