@@ -138,9 +138,9 @@ namespace Xsd2Code.Library.Extensions
         {
             var objectsOriginalFromCollectionPropertiesClass = new CodeTypeDeclaration(className)
             {
+                Attributes = MemberAttributes.Public,
                 IsClass = true,
                 IsPartial = false,
-                TypeAttributes = TypeAttributes.NotPublic,
             };
 
             objectsOriginalFromCollectionPropertiesClass.BaseTypes.Add(valueType);

@@ -61,17 +61,17 @@ namespace Xsd2Code.Library.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to         #region  Fields
+        ///   Looks up a localized string similar to        #region  Fields
         ///        private bool isDeserializingField;
         ///        private ObjectState originalobjectStateField = ObjectState.Added;
         ///        private bool isInitilizedField = false;
-        ///        private ObservableCollection&lt;PropertyValueState&gt; tackingChangesFields = new ObservableCollection&lt;PropertyValueState&gt;();
+        ///        private readonly ObservableCollection&lt;PropertyValueState&gt; changeSetsField = new ObservableCollection&lt;PropertyValueState&gt;();
         ///        private Delegate collectionChangedDelegateField = null;
         ///
-        ///        private bool changeTrackingEnabledField;
-        ///        private readonly object objectTrackingField;
+        ///        private bool objectTrackingEnabledField;
+        ///        private readonly object trackedObjectField;
         ///
-        ///        private P [rest of string was truncated]&quot;;.
+        ///        private [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ObjectChangeTracker_cs {
             get {

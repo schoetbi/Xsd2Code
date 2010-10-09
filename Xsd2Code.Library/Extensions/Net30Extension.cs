@@ -158,10 +158,6 @@ namespace Xsd2Code.Library.Extensions
             base.ProcessProperty(type, ns, member, xmlElement, schema);
 
             int i = 0;
-            if (member.Name == "ActualPalletCount")
-            {
-                i = i++;
-            }
             // Generate automatic properties.
             if (GeneratorContext.GeneratorParams.Language == GenerationLanguage.CSharp)
             {
@@ -216,10 +212,6 @@ namespace Xsd2Code.Library.Extensions
                 {
                     if (!isArray)
                     {
-                        if (field.Name == "mailClassField")
-                        {
-                            ;
-                        }
                         bool finded;
                         if (!this.IsComplexType(field.Type, ns, out finded))
                         {
@@ -292,10 +284,6 @@ namespace Xsd2Code.Library.Extensions
                 {
                     foreach (var item in this.autoPropertyListField)
                     {
-                        if (item.Name == "MailClass")
-                        {
-                            ;
-                        }
                         var cm = new CodeSnippetTypeMember();
                         bool transformToAutomaticproperty = true;
 

@@ -81,6 +81,7 @@
     <Compile Include="xsd\Gender.cs">
       <DependentUpon>Gender.xsd</DependentUpon>
     </Compile>
+    <Compile Include="xsd\hexBinary.designer.cs" />
     <Compile Include="xsd\Hierarchical.cs">
       <DependentUpon>Hierarchical.xsd</DependentUpon>
     </Compile>
@@ -119,6 +120,9 @@
     <Content Include="xsd\ReproSchema.xsd" />
     <Content Include="xsd\StackOverFlow.xsd" />
     <Content Include="xsd\TestAnnotations.xsd" />
+    <None Include="xsd\hexBinary.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="xsd\LazyLoading.xsd">
       <SubType>Designer</SubType>
     </None>

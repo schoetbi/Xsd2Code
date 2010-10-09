@@ -242,10 +242,12 @@ namespace Xsd2Code.TestUnit
                 generatorParams.Miscellaneous.EnableSummaryComment = true;
                 generatorParams.GenerateDataContracts = false;
                 generatorParams.GenericBaseClass.Enabled = false;
-                generatorParams.Serialization.GenerateXMLAttributes = true;
-                generatorParams.TrackingChanges.Enabled = true;
-                generatorParams.TrackingChanges.GenerateTrackingClasses = true;
-
+                generatorParams.Serialization.GenerateXmlAttributes = true;
+                generatorParams.TrackingChanges.Enabled = false;
+                generatorParams.TrackingChanges.GenerateTrackingClasses = false;
+                generatorParams.Serialization.EnableEncoding = false;
+                generatorParams.Serialization.DefaultEncoder = DefaultEncoder.UTF8;
+                generatorParams.Language = GenerationLanguage.VisualBasic;
 
                 var xsdGen = new GeneratorFacade(generatorParams);
                 var result = xsdGen.Generate();
@@ -254,14 +256,15 @@ namespace Xsd2Code.TestUnit
 
                 // Create new dvd collection and save it to file
                 var dvd = new DvdCollection();
-                dvd.Dvds.Add(new dvd { Title = "Matrix" });
+                dvd.Dvds.Add(new dvd { Title = "Matrix È‡?" });
                 var newitem = new dvd();
-                newitem.Actor.Add(new Actor { firstname = "James", nationality = "Us" });
+                newitem.Actor.Add(new Actor { firstname = "JamÈs ‡&", nationality = "Us" });
                 dvd.Dvds.Add(newitem);
                 var originalXml = dvd.Serialize();
                 dvd.SaveToFile(@"c:\temp\dvd.xml");
 
-                // Load data fom file and serialize it again.
+                // Load data fom file and serialize it again.                                                                                                                                                               
+
                 var loadedDvdCollection = DvdCollection.LoadFromFile(@"c:\temp\dvd.xml");
                 var finalXml = loadedDvdCollection.Serialize();
 
@@ -269,6 +272,59 @@ namespace Xsd2Code.TestUnit
                 if (!originalXml.Equals(finalXml))
                 {
                     Assert.Fail("Xml value are not equals");
+                }
+                Exception exp;
+                DvdCollection deserialiseDvd;
+                dvd.SaveToFile(@"c:\temp\dvdASCII.xml", Encoding.ASCII);
+                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdASCII.xml", Encoding.ASCII, out deserialiseDvd, out exp))
+                 {
+                    Assert.Fail("LoadFromFile failed on ASCII encoding ");
+                 }
+                else
+                {
+                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix ???"))
+                   {
+                        Assert.Fail("LoadFromFile failed on ASCII encoding ");
+                    }
+                }
+
+                dvd.SaveToFile(@"c:\temp\dvdUTF8.xml", Encoding.UTF8);
+                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdUTF8.xml", Encoding.UTF8, out deserialiseDvd, out exp))
+                {
+                    Assert.Fail("LoadFromFile failed on UTF8 encoding "); 
+                }
+                else
+                {
+                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix È‡?"))
+                    {
+                        Assert.Fail("LoadFromFile failed on UTF8 encoding ");
+                    }
+                }
+
+                dvd.SaveToFile(@"c:\temp\dvdUnicode.xml", Encoding.Unicode);
+                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdUnicode.xml", Encoding.Unicode, out deserialiseDvd, out exp))
+                {
+                    Assert.Fail("LoadFromFile failed on Unicode encoding ");
+                }
+                else
+                {
+                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix È‡?"))
+                    {
+                        Assert.Fail("LoadFromFile failed on Unicode encoding ");
+                    }
+                }
+
+                dvd.SaveToFile(@"c:\temp\dvdUTF32.xml", Encoding.UTF32);
+                if (!DvdCollection.LoadFromFile(@"c:\temp\dvdUTF32.xml", Encoding.UTF32, out deserialiseDvd, out exp))
+                {
+                    Assert.Fail("LoadFromFile failed on UTF32 encoding ");
+                }
+                else
+                {
+                    if (!deserialiseDvd.Dvds[0].Title.Equals("Matrix È‡?"))
+                    {
+                        Assert.Fail("LoadFromFile failed on UTF32 encoding ");
+                    }
                 }
 
                 var compileResult = CompileCSFile(generatorParams.OutputFilePath);
@@ -362,7 +418,7 @@ namespace Xsd2Code.TestUnit
                 generatorParams.TargetFramework = TargetFramework.Net30;
                 generatorParams.PropertyParams.AutomaticProperties = true;
                 generatorParams.GenerateDataContracts = true;
-                generatorParams.Serialization.GenerateXMLAttributes = true;
+                generatorParams.Serialization.GenerateXmlAttributes = true;
                 generatorParams.OutputFilePath = GetOutputFilePath(inputFilePath);
 
                 var xsdGen = new GeneratorFacade(generatorParams);
@@ -399,7 +455,7 @@ namespace Xsd2Code.TestUnit
                 generatorParams.TargetFramework = TargetFramework.Net30;
                 generatorParams.PropertyParams.AutomaticProperties = true;
                 generatorParams.GenerateDataContracts = true;
-                generatorParams.Serialization.GenerateXMLAttributes = true;
+                generatorParams.Serialization.GenerateXmlAttributes = true;
                 generatorParams.OutputFilePath = GetOutputFilePath(inputFilePath);
                 generatorParams.EnableDataBinding = true;
                 generatorParams.Miscellaneous.EnableSummaryComment = true;
@@ -497,6 +553,8 @@ namespace Xsd2Code.TestUnit
                 generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath,
                                                                       ".Silverlight20_01.cs");
 
+                generatorParams.Serialization.Enabled = true;
+                generatorParams.Serialization.EnableEncoding = true;
                 var xsdGen = new GeneratorFacade(generatorParams);
 
                 var result = xsdGen.Generate();
@@ -520,7 +578,7 @@ namespace Xsd2Code.TestUnit
                 var generatorParams = GetGeneratorParams(inputFilePath);
                 generatorParams.TargetFramework = TargetFramework.Net30;
                 generatorParams.PropertyParams.AutomaticProperties = true;
-                generatorParams.Serialization.GenerateXMLAttributes = true;
+                generatorParams.Serialization.GenerateXmlAttributes = true;
                 generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".xml.cs");
 
                 var xsdGen = new GeneratorFacade(generatorParams);
@@ -549,7 +607,7 @@ namespace Xsd2Code.TestUnit
                 generatorParams.Miscellaneous.EnableSummaryComment = false;
                 generatorParams.GenerateDataContracts = false;
                 generatorParams.PropertyParams.AutomaticProperties = true;
-                generatorParams.Serialization.GenerateXMLAttributes = true;
+                generatorParams.Serialization.GenerateXmlAttributes = true;
                 generatorParams.OutputFilePath = Path.ChangeExtension(generatorParams.InputFilePath, ".autoProp.cs");
 
                 var xsdGen = new GeneratorFacade(generatorParams);

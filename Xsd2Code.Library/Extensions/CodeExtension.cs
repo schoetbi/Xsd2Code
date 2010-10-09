@@ -23,6 +23,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 using System.Collections.ObjectModel;
+using System.Text;
 using Xsd2Code.Library.Properties;
 
 namespace Xsd2Code.Library.Extensions
@@ -145,7 +146,7 @@ namespace Xsd2Code.Library.Extensions
 
                 // Remove default .Net 2.0 XML attributes if disabled or silverlight project.
                 // Fixes http://xsd2code.codeplex.com/workitem/11761
-                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXMLAttributes
+                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXmlAttributes
                     || GeneratorContext.GeneratorParams.TargetFramework == TargetFramework.Silverlight)
                 {
                     this.RemoveDefaultXmlAttributes(type.CustomAttributes);
@@ -325,7 +326,7 @@ namespace Xsd2Code.Library.Extensions
 
                 // Remove default .Net 2.0 XML attributes if disabled or silverlight project.
                 // Fixes http://xsd2code.codeplex.com/workitem/11761
-                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXMLAttributes
+                if (!GeneratorContext.GeneratorParams.Serialization.GenerateXmlAttributes
                     || GeneratorContext.GeneratorParams.TargetFramework == TargetFramework.Silverlight)
                 {
                     this.RemoveDefaultXmlAttributes(member.CustomAttributes);
@@ -518,15 +519,6 @@ namespace Xsd2Code.Library.Extensions
         protected virtual void CreateCollectionClass(CodeNamespace codeNamespace, string collName)
         {
             var ctd = new CodeTypeDeclaration(collName) { IsClass = true };
-
-            /* DCM REMOVED NOT LANGUAGE INDEPENDENT
-            ctd.BaseTypes.Add(string.Format(
-                                            "{0}<{1}>",
-                                            GeneratorContext.GeneratorParams.CollectionBase,
-                                            CollectionTypes[collName]));
-            DCM REMOVED */
-
-            //DCM Changed to Languaged independent CodeDOM
             ctd.BaseTypes.Add(new CodeTypeReference(GeneratorContext.GeneratorParams.CollectionBase, new[] { new CodeTypeReference(CollectionTypes[collName]) }));
 
             ctd.IsPartial = true;
@@ -560,6 +552,10 @@ namespace Xsd2Code.Library.Extensions
             var ser = this.CreateSerializeMethod(type);
             ser.StartDirectives.Add(new CodeRegionDirective(CodeRegionMode.Start, "Serialize/Deserialize"));
             type.Members.Add(ser);
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                type.Members.Add(this.GetOverrideSerializeMethod(type));
+            }
 
             // Deserialize
             type.Members.AddRange(this.GetOverrideDeserializeMethods(type));
@@ -592,6 +588,10 @@ namespace Xsd2Code.Library.Extensions
             var tryStatmanentsCol = new CodeStatementCollection();
             var finallyStatmanentsCol = new CodeStatementCollection();
 
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                serializeMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Encoding), "encoding"));
+            }
             // ------------------------------------------------------------
             // System.IO.StreamReader streamReader = null;
             // System.IO.MemoryStream memoryStream = null;
@@ -612,16 +612,57 @@ namespace Xsd2Code.Library.Extensions
                 new CodeVariableReferenceExpression("memoryStream"),
                 CodeDomHelper.CreateInstance(typeof(MemoryStream))));
 
+
+            var textWriterOrStreamRef = new CodeTypeReferenceExpression("memoryStream");
+            //if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            //{
+            //    textWriterOrStreamRef = new CodeTypeReferenceExpression("xmlTextWriter");
+            //    tryStatmanentsCol.Add(
+            //        new CodeVariableDeclarationStatement(
+            //            new CodeTypeReference(typeof(XmlTextWriter)),
+            //            "xmlTextWriter",
+            //            CodeDomHelper.CreateInstance(typeof(XmlTextWriter), "memoryStream", "encoding")));
+            //}
+
+
+
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                tryStatmanentsCol.Add(
+                  new CodeVariableDeclarationStatement(
+                      new CodeTypeReference(typeof(XmlWriterSettings)),
+                      "xmlWriterSettings",
+                      CodeDomHelper.CreateInstance(typeof(XmlWriterSettings))));
+
+                tryStatmanentsCol.Add(new CodeAssignStatement(
+                    new CodeVariableReferenceExpression("xmlWriterSettings.Encoding"),
+                    new CodeArgumentReferenceExpression("encoding")));
+
+                var createXmlWriter = CodeDomHelper.GetInvokeMethod("XmlWriter","Create",new CodeExpression[]
+                        {
+                            new CodeArgumentReferenceExpression("memoryStream"),
+                            new CodeArgumentReferenceExpression("xmlWriterSettings")
+                        });
+
+                textWriterOrStreamRef = new CodeTypeReferenceExpression("xmlWriter");
+                tryStatmanentsCol.Add(
+                    new CodeVariableDeclarationStatement(
+                        new CodeTypeReference(typeof(XmlWriter)),
+                        "xmlWriter",
+                        createXmlWriter));
+            }
+
             // --------------------------------------------------------------------------
             // Serializer.Serialize(memoryStream, this);
             // --------------------------------------------------------------------------
+
             tryStatmanentsCol.Add(
                 CodeDomHelper.GetInvokeMethod(
                     "Serializer",
                     "Serialize",
                     new CodeExpression[]
                         {
-                            new CodeTypeReferenceExpression("memoryStream"),
+                            textWriterOrStreamRef,
                             new CodeThisReferenceExpression()
                         }));
 
@@ -665,13 +706,33 @@ namespace Xsd2Code.Library.Extensions
         }
 
         /// <summary>
+        /// Gets the serialize CodeDOM method.
+        /// </summary>
+        /// <param name="type">The type object to serilize.</param>
+        /// <returns>return the CodeDOM serialize method</returns>
+        protected virtual CodeMemberMethod GetOverrideSerializeMethod(CodeTypeDeclaration type)
+        {
+            var serializeMethod = new CodeMemberMethod
+            {
+                Attributes = MemberAttributes.Public,
+                Name = GeneratorContext.GeneratorParams.Serialization.SerializeMethodName
+            };
+
+            var serializeMethodInvoke = new CodeMethodInvokeExpression(
+                new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.SerializeMethodName), new CodeExpression[] { new CodeArgumentReferenceExpression(GeneratorContext.GeneratorParams.Serialization.GetEncoderString()) });
+
+            serializeMethod.Statements.Add(new CodeMethodReturnStatement(serializeMethodInvoke));
+            serializeMethod.ReturnType = new CodeTypeReference(typeof(string));
+            return serializeMethod;
+        }
+        /// <summary>
         /// Get Deserialize method
         /// </summary>
         /// <param name="type">represent a type declaration of class</param>
         /// <returns>Deserialize CodeMemberMethod</returns>
         protected virtual CodeMemberMethod GetDeserializeMethod(CodeTypeDeclaration type)
         {
-            string deserializeTypeName = GeneratorContext.GeneratorParams.GenericBaseClass.Enabled ? "T" : type.Name;
+            var deserializeTypeName = GeneratorContext.GeneratorParams.GenericBaseClass.Enabled ? "T" : type.Name;
 
             // ---------------------------------------
             // public static T Deserialize(string xml)
@@ -781,30 +842,6 @@ namespace Xsd2Code.Library.Extensions
                             new CodeDefaultValueExpression(new CodeTypeReference(deserializeTypeName))
                             ));
 
-            /* DCM REMOVE Switch Statement Dependent Code
-            switch (GeneratorContext.GeneratorParams.Language)
-            {
-                case GenerationLanguage.CSharp:
-                    {
-                        deserializeMethod.Statements.Add(
-                            new CodeAssignStatement(
-                              new CodeArgumentReferenceExpression("obj"),
-                                new CodeSnippetExpression(string.Format("default({0})", deserializeTypeName))));
-                    }
-
-                    break;
-                case GenerationLanguage.VisualBasic:
-                    {
-                        deserializeMethod.Statements.Add(
-                             new CodeAssignStatement(
-                                new CodeArgumentReferenceExpression("obj"),
-                                    new CodePrimitiveExpression(null)));
-                    }
-
-                    break;
-            }
-             */
-
             // ---------------------
             // try {...} catch {...}
             // ---------------------
@@ -903,6 +940,11 @@ namespace Xsd2Code.Library.Extensions
 
             saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
 
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Encoding), "encoding"));
+            }
+
             saveToFileMethod.Statements.Add(
                 new CodeVariableDeclarationStatement(
                     new CodeTypeReference(typeof(StreamWriter)),
@@ -914,32 +956,64 @@ namespace Xsd2Code.Library.Extensions
             // -----------------------
             var tryExpression = new CodeStatementCollection();
 
-            // ------------------------------
-            // string xmlString = Serialize();
-            // -------------------------------
-            var serializeMethodInvoke = new CodeMethodInvokeExpression(
-                new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.SerializeMethodName));
+            // ---------------------------------------
+            // string xmlString = Serialize(encoding);
+            // ---------------------------------------
+
+            CodeMethodInvokeExpression serializeMethodInvoke;
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                serializeMethodInvoke = new CodeMethodInvokeExpression(
+                    new CodeMethodReferenceExpression(null,
+                                                      GeneratorContext.GeneratorParams.Serialization.SerializeMethodName),
+                    new CodeExpression[] { new CodeArgumentReferenceExpression("encoding") });
+            }
+            else
+            {
+                serializeMethodInvoke = new CodeMethodInvokeExpression(
+                    new CodeMethodReferenceExpression(null,
+                                                      GeneratorContext.GeneratorParams.Serialization.SerializeMethodName));
+            }
+
 
             var xmlString = new CodeVariableDeclarationStatement(
                 new CodeTypeReference(typeof(string)), "xmlString", serializeMethodInvoke);
 
             tryExpression.Add(xmlString);
 
-            // --------------------------------------------------------------
-            // System.IO.FileInfo xmlFile = new System.IO.FileInfo(fileName);
-            // --------------------------------------------------------------
-            tryExpression.Add(CodeDomHelper.CreateObject(typeof(FileInfo), "xmlFile", new[] { "fileName" }));
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                // ----------------------------------------------------------------
+                // streamWriter = new StreamWriter(fileName, false, Encoding.UTF8);
+                // ----------------------------------------------------------------
+                tryExpression.Add(new CodeAssignStatement(
+                                      new CodeVariableReferenceExpression("streamWriter"),
+                                      new CodeObjectCreateExpression(
+                                          typeof(StreamWriter),
+                                          new CodeExpression[]
+                                              {
+                                                  new CodeSnippetExpression("fileName"),
+                                                  new CodeSnippetExpression("false"),
+                                                  new CodeSnippetExpression(GeneratorContext.GeneratorParams.Serialization.GetEncoderString())
+                        })));
+            }
+            else
+            {
+                // --------------------------------------------------------------
+                // System.IO.FileInfo xmlFile = new System.IO.FileInfo(fileName);
+                // --------------------------------------------------------------
+                tryExpression.Add(CodeDomHelper.CreateObject(typeof(FileInfo), "xmlFile", new[] { "fileName" }));
 
-            // ----------------------------------------
-            // StreamWriter Tex = xmlFile.CreateText();
-            // ----------------------------------------
-            var createTextMethodInvoke = CodeDomHelper.GetInvokeMethod("xmlFile", "CreateText");
+                // ----------------------------------------
+                // StreamWriter Tex = xmlFile.CreateText();
+                // ----------------------------------------
+                var createTextMethodInvoke = CodeDomHelper.GetInvokeMethod("xmlFile", "CreateText");
 
-            tryExpression.Add(
-                new CodeAssignStatement(
-                    new CodeVariableReferenceExpression("streamWriter"),
-                    createTextMethodInvoke));
-
+                tryExpression.Add(
+                    new CodeAssignStatement(
+                        new CodeVariableReferenceExpression("streamWriter"),
+                        createTextMethodInvoke));
+            }
             // ----------------------------------
             // streamWriter.WriteLine(xmlString);
             // ----------------------------------
@@ -984,6 +1058,11 @@ namespace Xsd2Code.Library.Extensions
 
             saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
 
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Encoding), "encoding"));
+            }
+
             var paramException = new CodeParameterDeclarationExpression(
                 typeof(Exception), "exception")
                                      {
@@ -1007,10 +1086,22 @@ namespace Xsd2Code.Library.Extensions
             // ---------------------
             var xmlStringParam = new CodeArgumentReferenceExpression("fileName");
 
-            var saveToFileInvoke =
-                new CodeMethodInvokeExpression(
-                    new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName),
-                    new CodeExpression[] { xmlStringParam });
+            CodeMethodInvokeExpression saveToFileInvoke;
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                saveToFileInvoke =
+                    new CodeMethodInvokeExpression(
+                        new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName),
+                        new CodeExpression[] { xmlStringParam, new CodeArgumentReferenceExpression("encoding") });
+
+            }
+            else
+            {
+                saveToFileInvoke =
+                   new CodeMethodInvokeExpression(
+                       new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName),
+                        new CodeExpression[] { xmlStringParam });
+            }
 
             tryExpression.Add(saveToFileInvoke);
             tryExpression.Add(CodeDomHelper.GetReturnTrue());
@@ -1037,6 +1128,67 @@ namespace Xsd2Code.Library.Extensions
             saveToFileMethod.Comments.Add(CodeDomHelper.GetReturnComment("true if can serialize and save into file; otherwise, false"));
 
             saveToFileMethodList.Add(saveToFileMethod);
+
+            //--------------------------------------------------------------------------------
+            // public virtual bool SaveToFile(string fileName, out System.Exception exception)
+            //--------------------------------------------------------------------------------
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                saveToFileMethod = new CodeMemberMethod
+                                       {
+                                           Attributes = MemberAttributes.Public,
+                                           Name = GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName
+                                       };
+
+                CodeExpression[] encodeingArgs;
+                encodeingArgs = new CodeExpression[]
+                                        {
+                                            xmlStringParam,
+                                            new CodeArgumentReferenceExpression(
+                                                GeneratorContext.GeneratorParams.Serialization.GetEncoderString()),
+                                            new CodeDirectionExpression(FieldDirection.Out,
+                                                                        new CodeSnippetExpression("exception"))
+                                        };
+
+                var saveToFileMethodInvoke = new CodeMethodInvokeExpression(
+                    new CodeMethodReferenceExpression(
+                        null,
+                        GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName), encodeingArgs);
+
+                saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+                saveToFileMethod.Parameters.Add(paramException);
+                saveToFileMethod.Statements.Add(new CodeMethodReturnStatement(saveToFileMethodInvoke));
+                saveToFileMethod.ReturnType = new CodeTypeReference(typeof(bool));
+
+                saveToFileMethodList.Add(saveToFileMethod);
+            }
+            //--------------------------------------------------------------------------------
+            // public virtual void SaveToFile(string fileName)
+            //--------------------------------------------------------------------------------
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                saveToFileMethod = new CodeMemberMethod
+                                       {
+                                           Attributes = MemberAttributes.Public,
+                                           Name = GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName
+                                       };
+
+                var encodeingArgs = new CodeExpression[]
+                                        {
+                                            xmlStringParam,
+                                            new CodeArgumentReferenceExpression(
+                                                GeneratorContext.GeneratorParams.Serialization.GetEncoderString())
+                                        };
+
+                var saveToFileMethodInvoke = new CodeMethodInvokeExpression(
+                    new CodeMethodReferenceExpression(
+                        null,
+                        GeneratorContext.GeneratorParams.Serialization.SaveToFileMethodName), encodeingArgs);
+
+                saveToFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+                saveToFileMethod.Statements.Add(saveToFileMethodInvoke);
+                saveToFileMethodList.Add(saveToFileMethod);
+            }
             return saveToFileMethodList.ToArray();
         }
 
@@ -1047,7 +1199,7 @@ namespace Xsd2Code.Library.Extensions
         /// <returns>return the codeDom LoadFromFile method</returns>
         protected virtual CodeMemberMethod GetLoadFromFileMethod(CodeTypeDeclaration type)
         {
-            string typeName = GeneratorContext.GeneratorParams.GenericBaseClass.Enabled ? "T" : type.Name;
+            var typeName = GeneratorContext.GeneratorParams.GenericBaseClass.Enabled ? "T" : type.Name;
 
             // ---------------------------------------------
             // public static T LoadFromFile(string fileName)
@@ -1059,6 +1211,11 @@ namespace Xsd2Code.Library.Extensions
             };
 
             loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Encoding), "encoding"));
+            }
+
             loadFromFileMethod.ReturnType = new CodeTypeReference(typeName);
 
             loadFromFileMethod.Statements.Add(
@@ -1092,16 +1249,21 @@ namespace Xsd2Code.Library.Extensions
                             CodeDomHelper.GetEnum("FileAccess","Read")
                         })));
 
+            CodeExpression[] codeParamExpression;
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                codeParamExpression = new CodeExpression[] { new CodeVariableReferenceExpression("file"), new CodeVariableReferenceExpression("encoding") };
+            }
+            else
+            {
+                codeParamExpression = new CodeExpression[] { new CodeVariableReferenceExpression("file") };
+            }
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
                     new CodeVariableReferenceExpression("sr"),
                     new CodeObjectCreateExpression(
-                        typeof(StreamReader),
-                        new CodeExpression[]
-                        {
-                            new CodeVariableReferenceExpression("file"),
-                        })));
-
+                        typeof(StreamReader), codeParamExpression
+                       )));
             // ----------------------------------
             // string xmlString = sr.ReadToEnd();
             // ----------------------------------
@@ -1147,9 +1309,8 @@ namespace Xsd2Code.Library.Extensions
         {
             string typeName = GeneratorContext.GeneratorParams.GenericBaseClass.Enabled ? "T" : type.Name;
 
-            CodeTypeReference teeType = new CodeTypeReference(typeName);
-
-            var saveToFileMethodList = new List<CodeMemberMethod>();
+            var teeType = new CodeTypeReference(typeName);
+            var loadFromFileMethodList = new List<CodeMemberMethod>();
             var loadFromFileMethod = new CodeMemberMethod
                                          {
                                              Attributes = MemberAttributes.Public | MemberAttributes.Static,
@@ -1157,6 +1318,11 @@ namespace Xsd2Code.Library.Extensions
                                          };
 
             loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Encoding), "encoding"));
+            }
 
             var param = new CodeParameterDeclarationExpression(typeName, "obj") { Direction = FieldDirection.Out };
             loadFromFileMethod.Parameters.Add(param);
@@ -1179,10 +1345,27 @@ namespace Xsd2Code.Library.Extensions
             var tryStatmanentsCol = new CodeStatementCollection();
 
             // Call LoadFromFile method
+
+            CodeExpression[] codeParamExpression;
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                codeParamExpression = new CodeExpression[]
+                {
+                    new CodeArgumentReferenceExpression("fileName"),
+                    new CodeArgumentReferenceExpression("encoding")
+                };
+            }
+            else
+            {
+                codeParamExpression = new CodeExpression[]
+                {
+                    new CodeArgumentReferenceExpression("fileName")
+                };
+            }
+
             var loadFromFileInvoke =
                 new CodeMethodInvokeExpression(
-                      new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName),
-                        new CodeExpression[] { new CodeArgumentReferenceExpression("fileName") });
+                      new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName), codeParamExpression);
 
             tryStatmanentsCol.Add(
                 new CodeAssignStatement(
@@ -1207,7 +1390,42 @@ namespace Xsd2Code.Library.Extensions
             loadFromFileMethod.Comments.Add(
                 CodeDomHelper.GetReturnComment("true if this XmlSerializer can deserialize the object; otherwise, false"));
 
-            saveToFileMethodList.Add(loadFromFileMethod);
+            loadFromFileMethodList.Add(loadFromFileMethod);
+
+            //-----------------------------------------------------
+            // 
+            //-----------------------------------------------------
+            var fileName = new CodeArgumentReferenceExpression("fileName");
+            var encoder = new CodeArgumentReferenceExpression(GeneratorContext.GeneratorParams.Serialization.GetEncoderString());
+            var objParam = new CodeDirectionExpression(FieldDirection.Out, new CodeFieldReferenceExpression(null, "obj"));
+            var expParam = new CodeDirectionExpression(FieldDirection.Out, new CodeFieldReferenceExpression(null, "exception"));
+
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                loadFromFileMethod = new CodeMemberMethod
+                                         {
+                                             Attributes = MemberAttributes.Public | MemberAttributes.Static,
+                                             Name =
+                                                 GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName
+                                         };
+
+                loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+
+                param = new CodeParameterDeclarationExpression(typeName, "obj") { Direction = FieldDirection.Out };
+                loadFromFileMethod.Parameters.Add(param);
+                param = new CodeParameterDeclarationExpression(typeof(Exception), "exception") { Direction = FieldDirection.Out };
+                loadFromFileMethod.Parameters.Add(param);
+                loadFromFileMethod.ReturnType = new CodeTypeReference(typeof(bool));
+                var loadFromFileMethodInvoke =
+                    new CodeMethodInvokeExpression(
+                        new CodeMethodReferenceExpression(null,
+                                                          GeneratorContext.GeneratorParams.Serialization.
+                                                              LoadFromFileMethodName),
+                        new CodeExpression[] { fileName, encoder, objParam, expParam });
+
+                loadFromFileMethod.Statements.Add(new CodeMethodReturnStatement(loadFromFileMethodInvoke));
+                loadFromFileMethodList.Add(loadFromFileMethod);
+            }
 
             // ------------------------------------------------------
             // public static bool LoadFromFile(string xml, out T obj)
@@ -1232,13 +1450,6 @@ namespace Xsd2Code.Library.Extensions
             // ------------------------------------------------------
             // return LoadFromFile(fileName, out obj, out exception);
             // ------------------------------------------------------
-            var fileName = new CodeArgumentReferenceExpression("fileName");
-            var objParam = new CodeDirectionExpression(
-                FieldDirection.Out, new CodeFieldReferenceExpression(null, "obj"));
-
-            var expParam = new CodeDirectionExpression(
-                FieldDirection.Out, new CodeFieldReferenceExpression(null, "exception"));
-
             var loadFromFileMethodInvok =
                 new CodeMethodInvokeExpression(
                     new CodeMethodReferenceExpression(null, GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName),
@@ -1246,8 +1457,30 @@ namespace Xsd2Code.Library.Extensions
 
             var returnStmt = new CodeMethodReturnStatement(loadFromFileMethodInvok);
             loadFromFileMethod.Statements.Add(returnStmt);
-            saveToFileMethodList.Add(loadFromFileMethod);
-            return saveToFileMethodList.ToArray();
+            loadFromFileMethodList.Add(loadFromFileMethod);
+            //-----------------------------------------------------------
+            // public static [TypeOfObject] LoadFromFile(string fileName)
+            //-----------------------------------------------------------
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                loadFromFileMethod = new CodeMemberMethod
+                {
+                    Attributes = MemberAttributes.Public | MemberAttributes.Static,
+                    Name = GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName
+                };
+                loadFromFileMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fileName"));
+                loadFromFileMethod.ReturnType = new CodeTypeReference(typeName);
+
+                var loadFromFileMethodInvoke = new CodeMethodInvokeExpression(
+                    new CodeMethodReferenceExpression(
+                        null,
+                        GeneratorContext.GeneratorParams.Serialization.LoadFromFileMethodName), new CodeArgumentReferenceExpression("fileName"), new CodeArgumentReferenceExpression(GeneratorContext.GeneratorParams.Serialization.GetEncoderString()));
+
+                returnStmt = new CodeMethodReturnStatement(loadFromFileMethodInvoke);
+                loadFromFileMethod.Statements.Add(returnStmt);
+                loadFromFileMethodList.Add(loadFromFileMethod);
+            }
+            return loadFromFileMethodList.ToArray();
         }
 
         /// <summary>
@@ -1282,8 +1515,17 @@ namespace Xsd2Code.Library.Extensions
             }
 
             if (GeneratorContext.GeneratorParams.Serialization.Enabled)
+            {
                 code.Imports.Add(new CodeNamespaceImport("System.IO"));
+                code.Imports.Add(new CodeNamespaceImport("System.Text"));
+            }
 
+            if (GeneratorContext.GeneratorParams.TargetFramework == TargetFramework.Silverlight &&
+                GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            {
+                code.Imports.Add(new CodeNamespaceImport("System.Xml"));
+               
+            }
             switch (GeneratorContext.GeneratorParams.CollectionObjectType)
             {
                 case CollectionType.IList:

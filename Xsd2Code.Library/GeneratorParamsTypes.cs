@@ -65,4 +65,15 @@ namespace Xsd2Code.Library
         /// </summary>
         All
     }
+
+    [DefaultValue(UTF8)]
+    public enum DefaultEncoder
+    {
+        ASCII,
+        Unicode,
+        BigEndianUnicode,
+        UTF8,
+        UTF32,
+        Default
+    }
 }

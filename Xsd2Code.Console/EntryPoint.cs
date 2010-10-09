@@ -264,10 +264,10 @@ namespace Xsd2Code
 
                     case "/xa":
                     case "/xa+":
-                        generatorParams.Serialization.GenerateXMLAttributes = true;
+                        generatorParams.Serialization.GenerateXmlAttributes = true;
                         break;
                     case "/xa-":
-                        generatorParams.Serialization.GenerateXMLAttributes = false;
+                        generatorParams.Serialization.GenerateXmlAttributes = false;
                         break;
 
                     case "/cl":

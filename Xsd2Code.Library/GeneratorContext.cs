@@ -40,6 +40,16 @@
         public const string GENERATEBASECLASSTAG = "GenBaseClass";
 
         /// <summary>
+        /// Indicate whether if text encoding is enable
+        /// </summary>
+        public const string ENEBLEENCODINGTAG = "EnableEncoding";
+
+        /// <summary>
+        /// Indicate whether if text encoding is enable
+        /// </summary>
+        public const string DEFAULTENCODERTAG = "Encoder";
+
+        /// <summary>
         /// Indicate if generate ShouldSerilize method for nullable type.
         /// </summary>
         public const string GENERATESHOULDSERIALIZETAG = "GenerateShouldSerialize";

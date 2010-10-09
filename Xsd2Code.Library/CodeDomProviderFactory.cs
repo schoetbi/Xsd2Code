@@ -3,7 +3,6 @@ using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using Microsoft.VisualBasic;
 using Xsd2Code.Library.Helpers;
-using Microsoft.VisualC;
 
 namespace Xsd2Code.Library
 {

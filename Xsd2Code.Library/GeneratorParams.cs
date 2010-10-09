@@ -21,7 +21,6 @@ namespace Xsd2Code.Library
         }
     }
 
-
     [Serializable]
     public class MiscellaneousParams : GeneratorParamsBase
     {
@@ -59,7 +58,7 @@ namespace Xsd2Code.Library
     [Serializable]
     public class PropertyParams : GeneratorParamsBase
     {
-        private GeneratorParams mainParamsFields;
+        private readonly GeneratorParams mainParamsFields;
 
         /// <summary>
         /// Indicate if use automatic properties
@@ -172,12 +171,46 @@ namespace Xsd2Code.Library
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether suppoort encoding.
+        /// </summary>
+        [Category("Serialize")]
+        [DefaultValue(false)]
+        [Description("Enable/Disable text encoding.")]
+        public bool EnableEncoding { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating dafault encoder for serialize/deserialize
+        /// </summary>
+        [Category("Serialize")]
+        [DefaultValue(DefaultEncoder.UTF8)]
+        [Description("Specifies the default encoding for Xml Serialization (ASCII, UNICODE, UTF8...).")]
+        public DefaultEncoder DefaultEncoder { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether if generate EditorBrowsableState.Never attribute
         /// </summary>
         [Category("Serialize")]
         [DefaultValue(false)]
         [Description("Indicating whether if generate .NET 2.0 serialization attributes. If false, serilisation will use propertyName")]
-        public bool GenerateXMLAttributes { get; set; }
+        public bool GenerateXmlAttributes { get; set; }
+
+        public string GetEncoderString()
+        {
+            switch (DefaultEncoder)
+            {
+                case DefaultEncoder.ASCII:
+                    return "Encoding.ASCII";
+                case DefaultEncoder.Unicode:
+                    return "Encoding.Unicode";
+                case DefaultEncoder.BigEndianUnicode:
+                    return "Encoding.BigEndianUnicode";
+                case DefaultEncoder.UTF32:
+                    return "Encoding.UTF32";
+                case DefaultEncoder.Default:
+                    return "Encoding.Default";
+            }
+            return "Encoding.UTF8";
+        }
     }
 
 
@@ -331,6 +364,7 @@ namespace Xsd2Code.Library
             this.EnableInitializeFields = true;
             this.Miscellaneous.ExcludeIncludedTypes = false;
             this.TrackingChanges.PropertyChanged += TrackingChangesPropertyChanged;
+            this.Serialization.DefaultEncoder = DefaultEncoder.UTF8;
         }
 
         /// <summary>
@@ -478,6 +512,7 @@ namespace Xsd2Code.Library
         [Category("Behavior")]
         [Description("Track changes.")]
         [TypeConverter(typeof(ExpandableObjectConverter))]
+        [Browsable(false)]
         public TrackingChangesParams TrackingChanges
         {
             get
@@ -703,11 +738,13 @@ namespace Xsd2Code.Library
                 parameters.TrackingChanges.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLETRACKINGCHANGESTAG));
                 parameters.TrackingChanges.GenerateTrackingClasses = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATETRACKINGCLASSESTAG));
                 parameters.Serialization.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.INCLUDESERIALIZEMETHODTAG));
+                parameters.Serialization.EnableEncoding = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENEBLEENCODINGTAG));
+                parameters.Serialization.DefaultEncoder = Utility.ToEnum<DefaultEncoder>(optionLine.ExtractStrFromXML(GeneratorContext.DEFAULTENCODERTAG));
                 parameters.GenerateCloneMethod = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATECLONEMETHODTAG));
                 parameters.GenerateDataContracts = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEDATACONTRACTSTAG));
                 parameters.TargetFramework = Utility.ToEnum<TargetFramework>(optionLine.ExtractStrFromXML(GeneratorContext.CODEBASETAG));
                 parameters.Miscellaneous.DisableDebug = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.DISABLEDEBUGTAG));
-                parameters.Serialization.GenerateXMLAttributes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEXMLATTRIBUTESTAG));
+                parameters.Serialization.GenerateXmlAttributes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEXMLATTRIBUTESTAG));
                 parameters.PropertyParams.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
                 parameters.PropertyParams.EnableVirtualProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG));
                 parameters.GenericBaseClass.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
@@ -792,11 +829,13 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DESERIALIZEMETHODNAMETAG, this.Serialization.DeserializeMethodName));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.SAVETOFILEMETHODNAMETAG, this.Serialization.SaveToFileMethodName));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.LOADFROMFILEMETHODNAMETAG, this.Serialization.LoadFromFileMethodName));
-            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEXMLATTRIBUTESTAG, this.Serialization.GenerateXMLAttributes.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEXMLATTRIBUTESTAG, this.Serialization.GenerateXmlAttributes.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEXMLATTRIBUTESTAG, this.Serialization.EnableEncoding.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.AUTOMATICPROPERTIESTAG, this.PropertyParams.AutomaticProperties.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATESHOULDSERIALIZETAG, this.PropertyParams.GenerateShouldSerializeProperty.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DISABLEDEBUGTAG, this.Miscellaneous.DisableDebug.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEPROPERTYNAMESPECIFIEDTAG, this.PropertyParams.GeneratePropertyNameSpecified.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.DEFAULTENCODERTAG, this.Serialization.DefaultEncoder.ToString()));
 
             var customUsingsStr = new StringBuilder();
             if (this.CustomUsings != null)
