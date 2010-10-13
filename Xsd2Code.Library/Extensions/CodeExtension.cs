@@ -1701,8 +1701,11 @@ namespace Xsd2Code.Library.Extensions
                     }
                     else
                     {
-                        ctor.Statements.Insert(0, this.CreateInstance(field.Name, field.Type));
-                        addedToConstructor = true;
+                        if (field.Type.BaseType != "System.Byte")
+                        {
+                            ctor.Statements.Insert(0, this.CreateInstance(field.Name, field.Type));
+                            addedToConstructor = true;
+                        }
                     }
                 }
             }

@@ -518,6 +518,27 @@ namespace Xsd2Code.TestUnit
             }
         }
 
+        [TestMethod]
+        public void HexBinary()
+        {
+            lock (testLock)
+            {
+
+                // Copy resource file to the run-time directory
+                string inputFilePath = GetInputFilePath("hexBinary.xsd", Resources.hexBinary);
+
+                var generatorParams = GetGeneratorParams(inputFilePath);
+                generatorParams.EnableInitializeFields = true;
+                var xsdGen = new GeneratorFacade(generatorParams);
+                var result = xsdGen.Generate();
+
+                Assert.IsTrue(result.Success, result.Messages.ToString());
+
+                var compileResult = CompileCSFile(generatorParams.OutputFilePath);
+                Assert.IsTrue(compileResult.Success, compileResult.Messages.ToString());
+            }
+        }
+
         //[TestMethod]
         //public void Serialize()
         //{
