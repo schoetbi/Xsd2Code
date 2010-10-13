@@ -348,7 +348,7 @@ namespace Xsd2Code.Library.Extensions
             }
 
             //DCM: Moved From GeneraterFacade File based removal to CodeDom Style Attribute-based removal
-            if (GeneratorContext.GeneratorParams.Miscellaneous.DisableDebug)
+            if (!GeneratorContext.GeneratorParams.Miscellaneous.DisableDebug)
             {
                 this.RemoveDebugAttributes(type.CustomAttributes);
             }
@@ -638,7 +638,7 @@ namespace Xsd2Code.Library.Extensions
                     new CodeVariableReferenceExpression("xmlWriterSettings.Encoding"),
                     new CodeArgumentReferenceExpression("encoding")));
 
-                var createXmlWriter = CodeDomHelper.GetInvokeMethod("XmlWriter","Create",new CodeExpression[]
+                var createXmlWriter = CodeDomHelper.GetInvokeMethod("XmlWriter", "Create", new CodeExpression[]
                         {
                             new CodeArgumentReferenceExpression("memoryStream"),
                             new CodeArgumentReferenceExpression("xmlWriterSettings")
@@ -1520,11 +1520,9 @@ namespace Xsd2Code.Library.Extensions
                 code.Imports.Add(new CodeNamespaceImport("System.Text"));
             }
 
-            if (GeneratorContext.GeneratorParams.TargetFramework == TargetFramework.Silverlight &&
-                GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
+            if (GeneratorContext.GeneratorParams.Serialization.EnableEncoding)
             {
                 code.Imports.Add(new CodeNamespaceImport("System.Xml"));
-               
             }
             switch (GeneratorContext.GeneratorParams.CollectionObjectType)
             {

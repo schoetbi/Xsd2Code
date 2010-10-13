@@ -186,7 +186,7 @@
             this.Name = "FormOption";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Xsd2Code class generator";
+            this.Text = "Xsd2Code class generator (Version 3.4)";
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.FormOption_KeyPress);
             this.tabControl.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);

@@ -42,7 +42,7 @@
         /// <summary>
         /// Indicate whether if text encoding is enable
         /// </summary>
-        public const string ENEBLEENCODINGTAG = "EnableEncoding";
+        public const string ENABLEENCODINGTAG = "EnableEncoding";
 
         /// <summary>
         /// Indicate whether if text encoding is enable

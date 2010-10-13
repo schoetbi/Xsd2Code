@@ -770,7 +770,7 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "FrameworkVersion" = "8:3.5.21022        "
+                "FrameworkVersion" = "8:3.5.21022         "
                 "AllowLaterVersions" = "11:FALSE"
                 "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=76617"
                 }
@@ -1336,7 +1336,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Xsd2Code.Library, Version=3.3.0.15256, Culture=neutral, PublicKeyToken=04032056d5f54f80, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Xsd2Code.Library, Version=3.4.0.32447, Culture=neutral, PublicKeyToken=04032056d5f54f80, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                     "_A590617463F2E306AF5C18F77096A333"

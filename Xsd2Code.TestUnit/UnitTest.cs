@@ -247,7 +247,6 @@ namespace Xsd2Code.TestUnit
                 generatorParams.TrackingChanges.GenerateTrackingClasses = false;
                 generatorParams.Serialization.EnableEncoding = false;
                 generatorParams.Serialization.DefaultEncoder = DefaultEncoder.UTF8;
-                generatorParams.Language = GenerationLanguage.VisualBasic;
 
                 var xsdGen = new GeneratorFacade(generatorParams);
                 var result = xsdGen.Generate();
