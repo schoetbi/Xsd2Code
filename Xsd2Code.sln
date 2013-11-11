@@ -1,5 +1,7 @@
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F9908FD4-95AF-43DF-A6E3-C4A85F37EDCC}"
 	ProjectSection(SolutionItems) = preProject
 		Xsd2Code.vsmdi = Xsd2Code.vsmdi
@@ -13,47 +15,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsd2Code.TestUnit", "Xsd2Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsd2Code.Addin", "Xsd2Code.Addin\Xsd2Code.Addin.csproj", "{45D359A7-1E3E-4988-8774-DB96AF49C59A}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Xsd2Code.Setup", "Xsd2Code.Setup\Xsd2Code.Setup.vdproj", "{58F8EB12-2466-498B-903B-3D1C604975C4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsd2Code.SetupLibrary", "Xsd2Code.SetupLibrary\Xsd2Code.SetupLibrary.csproj", "{FA90BBEB-8D22-4568-8742-718D7FA355AE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsd2Code.CustomTool", "Xsd2Code.CustomTool\Xsd2Code.CustomTool.csproj", "{7CD3B99F-0999-4054-80ED-B0977D723AFD}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsd2Code.Extras", "Xsd2Code.Extras\Xsd2Code.Extras.csproj", "{0AC355B6-5E0F-47A7-9C5C-DFDFFAC4A3C8}"
-EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 9
+		SccNumberOfProjects = 5
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs04
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = Xsd2Code.TestUnit\\Xsd2Code.TestUnit.csproj
 		SccProjectName1 = Xsd2Code.TestUnit
 		SccLocalPath1 = Xsd2Code.TestUnit
-		SccProjectUniqueName2 = Xsd2Code.SetupLibrary\\Xsd2Code.SetupLibrary.csproj
-		SccProjectName2 = Xsd2Code.SetupLibrary
-		SccLocalPath2 = Xsd2Code.SetupLibrary
-		SccProjectUniqueName3 = Xsd2Code.Setup\\Xsd2Code.Setup.vdproj
-		SccProjectName3 = Xsd2Code.Setup
-		SccLocalPath3 = Xsd2Code.Setup
-		SccProjectUniqueName4 = Xsd2Code.Library\\Xsd2Code.Library.csproj
-		SccProjectName4 = Xsd2Code.Library
-		SccLocalPath4 = Xsd2Code.Library
-		SccProjectUniqueName5 = Xsd2Code.CustomTool\\Xsd2Code.CustomTool.csproj
-		SccProjectName5 = Xsd2Code.CustomTool
-		SccLocalPath5 = Xsd2Code.CustomTool
-		SccProjectUniqueName6 = Xsd2Code.Addin\\Xsd2Code.Addin.csproj
-		SccProjectName6 = Xsd2Code.Addin
-		SccLocalPath6 = Xsd2Code.Addin
-		SccProjectUniqueName7 = Xsd2Code.Console\\Xsd2Code.csproj
-		SccProjectName7 = Xsd2Code.Console
-		SccLocalPath7 = Xsd2Code.Console
-		SccProjectUniqueName8 = Xsd2Code.Extras\\Xsd2Code.Extras.csproj
-		SccProjectName8 = Xsd2Code.Extras
-		SccLocalPath8 = Xsd2Code.Extras
-	EndGlobalSection
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = Xsd2Code.vsmdi
+		SccProjectUniqueName2 = Xsd2Code.Library\\Xsd2Code.Library.csproj
+		SccProjectName2 = Xsd2Code.Library
+		SccLocalPath2 = Xsd2Code.Library
+		SccProjectUniqueName3 = Xsd2Code.Addin\\Xsd2Code.Addin.csproj
+		SccProjectName3 = Xsd2Code.Addin
+		SccLocalPath3 = Xsd2Code.Addin
+		SccProjectUniqueName4 = Xsd2Code.Console\\Xsd2Code.csproj
+		SccProjectName4 = Xsd2Code.Console
+		SccLocalPath4 = Xsd2Code.Console
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,22 +55,11 @@ Global
 		{45D359A7-1E3E-4988-8774-DB96AF49C59A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45D359A7-1E3E-4988-8774-DB96AF49C59A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45D359A7-1E3E-4988-8774-DB96AF49C59A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{58F8EB12-2466-498B-903B-3D1C604975C4}.Debug|Any CPU.ActiveCfg = Debug
-		{58F8EB12-2466-498B-903B-3D1C604975C4}.Release|Any CPU.ActiveCfg = Release
-		{FA90BBEB-8D22-4568-8742-718D7FA355AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FA90BBEB-8D22-4568-8742-718D7FA355AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FA90BBEB-8D22-4568-8742-718D7FA355AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FA90BBEB-8D22-4568-8742-718D7FA355AE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7CD3B99F-0999-4054-80ED-B0977D723AFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7CD3B99F-0999-4054-80ED-B0977D723AFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7CD3B99F-0999-4054-80ED-B0977D723AFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7CD3B99F-0999-4054-80ED-B0977D723AFD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0AC355B6-5E0F-47A7-9C5C-DFDFFAC4A3C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0AC355B6-5E0F-47A7-9C5C-DFDFFAC4A3C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0AC355B6-5E0F-47A7-9C5C-DFDFFAC4A3C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0AC355B6-5E0F-47A7-9C5C-DFDFFAC4A3C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Xsd2Code.vsmdi
 	EndGlobalSection
 EndGlobal
