@@ -50,6 +50,11 @@
         public const string DEFAULTENCODERTAG = "Encoder";
 
         /// <summary>
+        /// Indicate tag for order xml attribute
+        /// </summary>
+        public const string ORDERXMLATTRIBUTETAG = "OrderXMLAttrib";
+
+        /// <summary>
         /// Indicate if generate ShouldSerilize method for nullable type.
         /// </summary>
         public const string GENERATESHOULDSERIALIZETAG = "GenerateShouldSerialize";

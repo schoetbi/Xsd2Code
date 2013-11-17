@@ -194,6 +194,23 @@ namespace Xsd2Code.Library
         [Description("Indicating whether if generate .NET 2.0 serialization attributes. If false, serilisation will use propertyName")]
         public bool GenerateXmlAttributes { get; set; }
 
+        private bool _generateOrderXmlAttributes;
+
+        /// <summary>
+        /// Gets or sets a value indicating the name of SaveToFile method.
+        /// </summary>
+        [Category("Serialize"), DefaultValue(false),
+         Description("Generate order xml Attribute (Work only if GenerateXmlAttributes is true).")]
+        public bool GenerateOrderXmlAttributes
+        {
+            get { return _generateOrderXmlAttributes; }
+            set
+            {
+                _generateOrderXmlAttributes = value;
+                OnPropertyChanged("GenerateOrderXmlAttributes");
+            }
+        }
+
         public string GetEncoderString()
         {
             switch (DefaultEncoder)
@@ -745,6 +762,7 @@ namespace Xsd2Code.Library
                 parameters.TargetFramework = Utility.ToEnum<TargetFramework>(optionLine.ExtractStrFromXML(GeneratorContext.CODEBASETAG));
                 parameters.Miscellaneous.DisableDebug = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.DISABLEDEBUGTAG));
                 parameters.Serialization.GenerateXmlAttributes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATEXMLATTRIBUTESTAG));
+                parameters.Serialization.GenerateOrderXmlAttributes = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ORDERXMLATTRIBUTETAG));
                 parameters.PropertyParams.AutomaticProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.AUTOMATICPROPERTIESTAG));
                 parameters.PropertyParams.EnableVirtualProperties = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEVIRTUALPROPERTIESTAG));
                 parameters.GenericBaseClass.Enabled = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.USEGENERICBASECLASSTAG));
@@ -830,6 +848,7 @@ namespace Xsd2Code.Library
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.SAVETOFILEMETHODNAMETAG, this.Serialization.SaveToFileMethodName));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.LOADFROMFILEMETHODNAMETAG, this.Serialization.LoadFromFileMethodName));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATEXMLATTRIBUTESTAG, this.Serialization.GenerateXmlAttributes.ToString()));
+            optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ORDERXMLATTRIBUTETAG, this.Serialization.GenerateOrderXmlAttributes.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.ENABLEENCODINGTAG, this.Serialization.EnableEncoding.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.AUTOMATICPROPERTIESTAG, this.PropertyParams.AutomaticProperties.ToString()));
             optionsLine.Append(XmlHelper.InsertXMLFromStr(GeneratorContext.GENERATESHOULDSERIALIZETAG, this.PropertyParams.GenerateShouldSerializeProperty.ToString()));
