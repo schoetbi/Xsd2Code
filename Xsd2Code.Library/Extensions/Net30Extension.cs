@@ -164,9 +164,6 @@ namespace Xsd2Code.Library.Extensions
                 if (GeneratorContext.GeneratorParams.PropertyParams.AutomaticProperties)
                 {
                     bool excludeType = false;
-                    // Change automatic property only for type of system Namespace, 
-                    if (prop.Type.BaseType.Contains("System."))
-                    {
                         // Exclude collection type
                         if (CollectionTypesFields.IndexOf(prop.Name) == -1)
                         {
@@ -185,7 +182,6 @@ namespace Xsd2Code.Library.Extensions
                                 }
                             }
                         }
-                    }
                 }
             }
         }

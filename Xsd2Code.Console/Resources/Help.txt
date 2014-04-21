@@ -27,8 +27,8 @@ Options:
     /is-                                - Do not include Serialize method (default)
     /cl[+]                              - Include Clone method
     /cl-                                - Do not include Clone method (default)
-    /dbg[+]                             - Enable debug step through
-    /dbg-                               - Disable debug step through (default)
+    /dbg[+]                             - Enable debug step through (default)
+    /dbg-                               - Disable debug step through
     /db[+]                              - Enable data bindings 
     /db-                                - Disable data bindings (default)
     /dc[+]                              - Generate WCF data contract attributes 

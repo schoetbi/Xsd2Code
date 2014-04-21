@@ -65,7 +65,6 @@ namespace Xsd2Code
                     generatorParams.OutputFilePath = args[2];
             }
 
-
             // Process command-line parameter switches
             for (int i = 1; i < args.Length; i++)
             {
